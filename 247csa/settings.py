@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 env = environ.Env()
-# Read .env file
+# Read .env file from the root directory
 environ.Env.read_env(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
