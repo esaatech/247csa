@@ -18,8 +18,11 @@ services:
 
   db:
     image: mysql:8.0
-    env_file:
-      - .env
+    environment:
+      - MYSQL_DATABASE=csa247
+      - MYSQL_USER=csa247user
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
 
