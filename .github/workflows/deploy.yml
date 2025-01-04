@@ -51,7 +51,12 @@ jobs:
 
     - name: Deploy to VM Instance
       run: |
+        # Copy necessary files to VM
         gcloud compute scp docker-compose.yml $GCE_INSTANCE:~/ --zone=$GCE_INSTANCE_ZONE
+        gcloud compute scp Dockerfile $GCE_INSTANCE:~/ --zone=$GCE_INSTANCE_ZONE
+        gcloud compute scp .env $GCE_INSTANCE:~/ --zone=$GCE_INSTANCE_ZONE
+
+        # Execute commands on VM
         gcloud compute ssh --zone $GCE_INSTANCE_ZONE $GCE_INSTANCE --command '
           sudo usermod -aG docker $USER
           sudo chmod 666 /var/run/docker.sock
