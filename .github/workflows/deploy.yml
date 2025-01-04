@@ -29,8 +29,13 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
 
+    - name: Debug Docker Authentication
+      run: |
+        cat ~/.docker/config.json || echo "No Docker config found"
+        docker login us-central1-docker.pkg.dev
+
     - name: Configure Docker
-      run: gcloud auth configure-docker
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
     - name: Create env file
       run: |
