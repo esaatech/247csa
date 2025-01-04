@@ -51,10 +51,12 @@ jobs:
 
     - name: Deploy to VM Instance
       run: |
-        gcloud compute scp .env $GCE_INSTANCE:~/ --zone=$GCE_INSTANCE_ZONE
+        gcloud compute scp docker-compose.yml $GCE_INSTANCE:~/ --zone=$GCE_INSTANCE_ZONE
         gcloud compute ssh --zone $GCE_INSTANCE_ZONE $GCE_INSTANCE --command '
-          docker pull ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          sudo usermod -aG docker $USER
+          sudo chmod 666 /var/run/docker.sock
+          sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
           echo "IMAGE_TAG=${{ github.sha }}" >> .env
-          docker-compose down
-          docker-compose up -d
+          sudo docker-compose down
+          sudo docker-compose up -d
         '
