@@ -33,3 +33,5 @@ docker-compose.override.yml
 # System
 .DS_Store
 .bfg-report/
+247csaI/
+patterns.txt
