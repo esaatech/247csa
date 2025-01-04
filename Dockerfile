@@ -22,5 +22,11 @@ RUN poetry config virtualenvs.create false \
 # Copy project files
 COPY . .
 
+# Create static and media directories
+RUN mkdir -p /app/static /app/media
+
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
 # Run gunicorn
 CMD ["poetry", "run", "gunicorn", "247csa.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"] 

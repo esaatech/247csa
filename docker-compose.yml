@@ -14,7 +14,10 @@ services:
       - media_volume:/app/media
     depends_on:
       - db
-    command: gunicorn 247csa.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             gunicorn 247csa.wsgi:application --bind 0.0.0.0:8000 --workers 3"
 
   db:
     image: mysql:8.0
@@ -31,7 +34,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - static_volume:/app/static
       - media_volume:/app/media
     depends_on:
