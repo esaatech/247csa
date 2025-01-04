@@ -9,7 +9,7 @@ env:
   PROJECT_ID: esaasolution
   GCE_INSTANCE: csa247
   GCE_INSTANCE_ZONE: us-central1-a
-  DOCKER_IMAGE: us-central1-docker.pkg.dev/esaasolution/csa247-repo/csa247
+  DOCKER_IMAGE: gcr.io/esaasolution/csa247
 
 jobs:
   deploy:
@@ -52,4 +52,4 @@ jobs:
           echo "IMAGE_TAG=${{ github.sha }}" >> .env
           docker-compose down
           docker-compose up -d
-        ' 
+        '
