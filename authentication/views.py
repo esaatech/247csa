@@ -75,6 +75,5 @@ class RegisterView(CreateView):
         return super().dispatch(request, *args, **kwargs)
 # Create your views here.
 def logout_view(request):
-    if request.method == 'POST':
-        logout(request)
-        return redirect('main:home')
+    logout(request)
+    return redirect('home:home')

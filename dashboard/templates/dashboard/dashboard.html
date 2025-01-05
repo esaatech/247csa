@@ -1,10 +1,178 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
-        <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
-        <p class="mt-4 text-gray-600">Welcome, {{ user.username }}!</p>
+<div class="flex h-screen w-full">
+    <!-- Left Navigation -->
+    <div class="w-1/5 min-w-[300px] bg-white p-4 border-r">
+        <button 
+            id="createButton"
+            class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+        >
+            Create Assistant
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-auto min-w-0" id="mainContent">
+        <!-- Tutorial Content -->
+        <div id="tutorialContent" class="p-8 max-w-full">
+            <h2 class="text-2xl font-bold mb-6">Welcome to 247CSA</h2>
+            <div class="bg-white rounded-lg shadow p-6 max-w-4xl">
+                <h3 class="text-lg font-semibold mb-2">Let's Help You Get Started</h3>
+                <p class="text-gray-600 mb-4">Learn how to create and manage your AI assistants</p>
+                <ol class="list-decimal ml-4 space-y-2">
+                    <li>Click "Create Assistant" to begin setup</li>
+                    <li>Configure your assistant's information</li>
+                    <li>Add knowledge base content</li>
+                    <li>Connect communication channels</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Create Form -->
+        <div id="createForm" class="p-8 hidden max-w-full">
+            <div class="space-y-6 max-w-4xl">
+                <!-- Basic Info -->
+                <div>
+                    <label class="block font-medium mb-2">Assistant Name</label>
+                    <input 
+                        type="text"
+                        class="w-full p-2 border rounded-md"
+                        placeholder="Enter assistant name"
+                    >
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">Description</label>
+                    <textarea 
+                        class="w-full p-2 border rounded-md h-24"
+                        placeholder="Describe what this assistant does"
+                    ></textarea>
+                </div>
+
+                <!-- Instructions -->
+                <div>
+                    <label class="block font-medium mb-2">Instructions</label>
+                    <div id="instructionsList" class="space-y-2"></div>
+                    <button
+                        id="addInstruction"
+                        class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Add Instruction
+                    </button>
+                </div>
+
+                <!-- Knowledge Base -->
+                <div>
+                    <label class="block font-medium mb-2">Knowledge Base</label>
+                    <div class="border-2 border-dashed rounded-lg p-6 text-center" id="dropZone">
+                        <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Drop files here or click to upload
+                        </p>
+                        <p class="text-xs text-gray-500">PDF files supported</p>
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf" multiple>
+                    </div>
+                    <input
+                        type="text"
+                        class="w-full mt-4 p-2 border rounded-md"
+                        placeholder="Or enter a website URL to scrape"
+                    >
+                    <textarea
+                        class="w-full mt-4 p-2 border rounded-md h-24"
+                        placeholder="Or paste your text here..."
+                    ></textarea>
+                </div>
+
+                <!-- Channels -->
+                <div>
+                    <label class="block font-medium mb-2">Communication Channels</label>
+                    <div id="channelsList" class="space-y-2"></div>
+                    <button
+                        id="addChannel"
+                        class="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Add Channel
+                    </button>
+                </div>
+
+                <button class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+                    Create Assistant
+                </button>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Channel Modal Template -->
+<div id="channelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg w-96">
+        <h3 class="text-lg font-semibold mb-4">Add Channel</h3>
+        <select id="channelSelect" class="w-full p-2 border rounded-md mb-4">
+            <option value="">Select a channel</option>
+            <option value="email">Email</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="messenger">Facebook Messenger</option>
+            <option value="instagram">Instagram DM</option>
+            <option value="slack">Slack</option>
+            <option value="teams">Microsoft Teams</option>
+            <option value="sms">SMS</option>
+            <option value="voice">Voice</option>
+        </select>
+        <div id="channelConfig" class="space-y-4"></div>
+        <div class="flex justify-end gap-2 mt-4">
+            <button id="closeModal" class="px-4 py-2 border rounded hover:bg-gray-50">Cancel</button>
+            <button id="saveChannel" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js_scripts %}
+    // Channel configurations
+    const channelConfigs = {
+        email: [
+            { name: 'email', label: 'Email Address', type: 'email' },
+            { name: 'appPassword', label: 'App Password', type: 'password' }
+        ],
+        whatsapp: [
+            { name: 'phoneNumber', label: 'Phone Number', type: 'tel' },
+            { name: 'apiKey', label: 'API Key', type: 'password' }
+        ]
+    };
+
+    // Wait for DOM and Lucide to be ready
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const createButton = document.getElementById('createButton');
+        const tutorialContent = document.getElementById('tutorialContent');
+        const createForm = document.getElementById('createForm');
+        const mainContent = document.getElementById('mainContent');
+        const instructionsList = document.getElementById('instructionsList');
+        const addInstruction = document.getElementById('addInstruction');
+        const channelsList = document.getElementById('channelsList');
+        const addChannel = document.getElementById('addChannel');
+        const channelModal = document.getElementById('channelModal');
+        const channelSelect = document.getElementById('channelSelect');
+        const channelConfig = document.getElementById('channelConfig');
+        const closeModal = document.getElementById('closeModal');
+        const saveChannel = document.getElementById('saveChannel');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        // Your existing event listeners
+        createButton.addEventListener('click', () => {
+            tutorialContent.classList.add('hidden');
+            createForm.classList.remove('hidden');
+        });
+
+        // Rest of your event listeners...
+    });
+
 {% endblock %}

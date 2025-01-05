@@ -6,4 +6,5 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('auth/', include('authentication.urls')),
     path('social-auth/', include('social_django.urls', namespace='social')),
+    path('', include('home.urls')),
 ]
