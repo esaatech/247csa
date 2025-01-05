@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 User = get_user_model()
 
 class CustomLoginView(View):
-    template_name = 'login.html'
+    template_name = 'authentication/login.html'
 
     def get(self, request):
         return render(request, self.template_name)
@@ -52,7 +52,7 @@ class CustomLoginView(View):
 class RegisterView(CreateView):
     
     success_url = reverse_lazy('dashboard:dashboard')
-    template_name = 'register.html'
+    template_name = 'authentication/register.html'
     form_class = CustomUserCreationForm
     
     def form_valid(self, form):
