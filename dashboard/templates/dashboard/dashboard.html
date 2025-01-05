@@ -63,10 +63,23 @@
                     </button>
                 </div>
 
+
+                <div>
+                    <label class="block font-medium mb-2">Task</label>
+                    <div id="taskList" class="space-y-2"></div>
+                    <button
+                        id="addTask"
+                        class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Add Task
+                    </button>
+                </div>
+
                 <!-- Knowledge Base -->
                 <div>
                     <label class="block font-medium mb-2">Knowledge Base</label>
-                    <div class="border-2 border-dashed rounded-lg p-6 text-center" id="dropZone">
+                    <div class="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer" id="dropZone">
                         <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
                         <p class="mt-2 text-sm text-gray-500">
                             Drop files here or click to upload
@@ -74,15 +87,7 @@
                         <p class="text-xs text-gray-500">PDF files supported</p>
                         <input type="file" id="fileInput" class="hidden" accept=".pdf" multiple>
                     </div>
-                    <input
-                        type="text"
-                        class="w-full mt-4 p-2 border rounded-md"
-                        placeholder="Or enter a website URL to scrape"
-                    >
-                    <textarea
-                        class="w-full mt-4 p-2 border rounded-md h-24"
-                        placeholder="Or paste your text here..."
-                    ></textarea>
+                    <div id="fileList" class="mt-4 space-y-2"></div>
                 </div>
 
                 <!-- Channels -->
@@ -170,6 +175,48 @@
         createButton.addEventListener('click', () => {
             tutorialContent.classList.add('hidden');
             createForm.classList.remove('hidden');
+        });
+
+        // Add Instruction Handler
+        addInstruction.addEventListener('click', () => {
+            const instruction = document.createElement('div');
+            instruction.className = 'flex items-center gap-2';
+            instruction.innerHTML = `
+                <textarea 
+                    class="flex-1 p-2 border rounded-md" 
+                    placeholder="Enter instruction"
+                    rows="2"
+                ></textarea>
+                <button 
+                    class="p-2 text-red-600 hover:bg-red-50 rounded"
+                    onclick="this.parentElement.remove()"
+                >
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                </button>
+            `;
+            instructionsList.appendChild(instruction);
+            lucide.createIcons();
+        });
+
+        // Add Task Handler
+        addTask.addEventListener('click', () => {
+            const task = document.createElement('div');
+            task.className = 'flex items-center gap-2';
+            task.innerHTML = `
+                <textarea 
+                    class="flex-1 p-2 border rounded-md" 
+                    placeholder="Enter task"
+                    rows="2"
+                ></textarea>
+                <button 
+                    class="p-2 text-red-600 hover:bg-red-50 rounded"
+                    onclick="this.parentElement.remove()"
+                >
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                </button>
+            `;
+            taskList.appendChild(task);
+            lucide.createIcons();
         });
 
         // Rest of your event listeners...
