@@ -43,6 +43,7 @@ jobs:
         echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
         echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
         echo "DOCKER_ENVIRONMENT=true" >> .env
+        echo "WHATSAPP_VERIFY_TOKEN=${{ secrets.WHATSAPP_VERIFY_TOKEN }}" >> .env
 
     - name: Build and Push Docker Image
       run: |

@@ -18,22 +18,29 @@ class OAuthToken(models.Model):
 
 
 
-class Email(models.Model):
-    user_profile = models.ForeignKey(
-        'UserProfile.UserProfile',
-        on_delete=models.CASCADE,
-        related_name='emails'
-    )
-    email_id = models.CharField(max_length=255)
-    thread_id = models.CharField(max_length=255, blank=True, null=True)
-    subject = models.CharField(max_length=255, blank=True, null=True)
-    sender = models.EmailField()
+class AbstractBaseMessage(models.Model):
+    user_profile = models.ForeignKey('UserProfile.UserProfile', on_delete=models.CASCADE)
+    sender = models.CharField(max_length=255)
     recipients = models.TextField(blank=True, null=True)
+    body = models.TextField(blank=True, null=True)
     received_at = models.DateTimeField()
     is_read = models.BooleanField(default=False)
     is_replied = models.BooleanField(default=False)
-    labels = models.TextField(blank=True, null=True)
-    snippet = models.TextField(blank=True, null=True)
-    attachment_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+class Email(AbstractBaseMessage):
+    email_id = models.CharField(max_length=255)
+    thread_id = models.CharField(max_length=255, blank=True, null=True)
+    subject = models.CharField(max_length=255, blank=True, null=True)
+    labels = models.TextField(blank=True, null=True)
+    attachment_count = models.IntegerField(default=0)
+
+class WhatsAppMessage(AbstractBaseMessage):
+    message_id = models.CharField(max_length=255)
+    media_url = models.URLField(blank=True, null=True)
+    media_type = models.CharField(max_length=50, blank=True, null=True)
+
