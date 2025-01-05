@@ -79,6 +79,8 @@
                 <!-- Knowledge Base -->
                 <div>
                     <label class="block font-medium mb-2">Knowledge Base</label>
+                    
+                    <!-- File Upload -->
                     <div class="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer" id="dropZone">
                         <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
                         <p class="mt-2 text-sm text-gray-500">
@@ -88,20 +90,44 @@
                         <input type="file" id="fileInput" class="hidden" accept=".pdf" multiple>
                     </div>
                     <div id="fileList" class="mt-4 space-y-2"></div>
+
+                    <!-- URL Input -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-1">Website URLs</label>
+                        <div id="urlList" class="space-y-2"></div>
+                        <button
+                            id="addUrl"
+                            class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                        >
+                            <i data-lucide="plus" class="h-4 w-4"></i>
+                            Add URL
+                        </button>
+                    </div>
+
+                    <!-- Text Input -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-1">Paste Text</label>
+                        <textarea 
+                            class="w-full p-2 border rounded-md h-32"
+                            placeholder="Paste your text here"
+                        ></textarea>
+                    </div>
                 </div>
 
                 <!-- Channels -->
                 <div>
-                    <label class="block font-medium mb-2">Communication Channels</label>
+                    <label class="block font-medium mb-2">Triggers</label>
                     <div id="channelsList" class="space-y-2"></div>
                     <button
                         id="addChannel"
                         class="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
                     >
                         <i data-lucide="plus" class="h-4 w-4"></i>
-                        Add Channel
+                        Add Trigger
                     </button>
                 </div>
+
+                
 
                 <button class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
                     Create Assistant
@@ -161,23 +187,23 @@
         const mainContent = document.getElementById('mainContent');
         const instructionsList = document.getElementById('instructionsList');
         const addInstruction = document.getElementById('addInstruction');
-        const channelsList = document.getElementById('channelsList');
-        const addChannel = document.getElementById('addChannel');
-        const channelModal = document.getElementById('channelModal');
-        const channelSelect = document.getElementById('channelSelect');
-        const channelConfig = document.getElementById('channelConfig');
-        const closeModal = document.getElementById('closeModal');
-        const saveChannel = document.getElementById('saveChannel');
+        const taskList = document.getElementById('taskList');
+        const addTask = document.getElementById('addTask');
+        const urlList = document.getElementById('urlList');
+        const addUrl = document.getElementById('addUrl');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const triggersList = document.getElementById('channelsList');
+        const addTrigger = document.getElementById('addChannel');
 
-        // Your existing event listeners
+        // Create Button Handler
         createButton.addEventListener('click', () => {
             tutorialContent.classList.add('hidden');
             createForm.classList.remove('hidden');
         });
 
-        // Add Instruction Handler
+        // Instructions Handler
         addInstruction.addEventListener('click', () => {
             const instruction = document.createElement('div');
             instruction.className = 'flex items-center gap-2';
@@ -198,7 +224,7 @@
             lucide.createIcons();
         });
 
-        // Add Task Handler
+        // Tasks Handler
         addTask.addEventListener('click', () => {
             const task = document.createElement('div');
             task.className = 'flex items-center gap-2';
@@ -219,7 +245,99 @@
             lucide.createIcons();
         });
 
-        // Rest of your event listeners...
+        // URL Handler
+        addUrl.addEventListener('click', () => {
+            const urlEntry = document.createElement('div');
+            urlEntry.className = 'flex items-center gap-2';
+            urlEntry.innerHTML = `
+                <input 
+                    type="url" 
+                    class="flex-1 p-2 border rounded-md"
+                    placeholder="Enter website URL"
+                >
+                <button 
+                    class="p-2 text-red-600 hover:bg-red-50 rounded"
+                    onclick="this.parentElement.remove()"
+                >
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                </button>
+            `;
+            urlList.appendChild(urlEntry);
+            lucide.createIcons();
+        });
+
+        // File Upload Handlers
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between p-2 bg-gray-50 rounded';
+                fileItem.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="file" class="h-4 w-4 text-gray-400"></i>
+                        <span class="text-sm">${file.name}</span>
+                        <span class="text-xs text-gray-500">${formatFileSize(file.size)}</span>
+                    </div>
+                    <button class="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                    </button>
+                `;
+
+                const deleteBtn = fileItem.querySelector('button');
+                deleteBtn.addEventListener('click', () => {
+                    fileItem.remove();
+                });
+
+                fileList.appendChild(fileItem);
+                lucide.createIcons();
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Trigger Handler
+        addTrigger.addEventListener('click', () => {
+            channelModal.classList.remove('hidden');
+        });
     });
 
 {% endblock %}
