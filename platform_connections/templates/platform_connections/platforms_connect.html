@@ -1,0 +1,80 @@
+<div>
+    <p class="mb-4">Connect your CSA to various platforms to reach your users where they are.</p>
+    <input type="hidden" id="connectionMap" name="connection_map" value="{}">
+    <div class="flex flex-wrap gap-2 mb-4">
+        <button 
+            class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            data-platform="slack"
+            data-platform-id="{{ slack_connection.id|default:'' }}"
+            {% if slack_connection %}class="connected"{% endif %}
+        >
+            Connect to Slack
+        </button>
+        <button 
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            data-platform="teams"
+            data-platform-id="{{ teams_connection.id|default:'' }}"
+            {% if teams_connection %}class="connected"{% endif %}
+        >
+            Connect to Microsoft Teams
+        </button>
+        <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            Connect to WhatsApp
+        </button>
+       
+  
+        <button class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">
+            Connect to Email
+        </button>
+        <button class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">
+            Connect to Instagram DM
+        </button>
+        <button class="bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-900">
+            Connect to Facebook Messenger
+        </button>
+        <button 
+  class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+  hx-get="{% url 'platform_connections:sms_config' %}" 
+  hx-target="#platformPanelContainer" 
+  hx-swap="innerHTML"
+>
+  Connect to SMS (Twilio)
+</button>
+
+<div id="platformPanelContainer"></div>
+        
+
+
+<button 
+    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center gap-2 {% if platform_status.website_chat.is_connected %}bg-green-600 hover:bg-green-700{% endif %}"
+    hx-get="{% url 'platform_connections:website_chat_config' %}" 
+    hx-target="#platformPanelContainer" 
+    hx-swap="innerHTML"
+    hx-vals='js:{ agent_id: window.agent_id, newagent_id: window.csaId }'
+    data-platform="website_chat"
+    data-platform-id="{{ platform_status.website_chat.connection_id }}"
+    {% if platform_status.website_chat.is_connected %}class="connected"{% endif %}
+>
+    <span class="checkmark {% if platform_status.website_chat.is_connected %}block{% else %}hidden{% endif %}">✓</span>
+    <span class="button-text">
+        {% if platform_status.website_chat.is_connected %}
+            Connected to Website Chat
+        {% else %}
+            Connect to Website Chat
+        {% endif %}
+    </span>
+</button>
+
+<div id="platformPanelContainer">  </div>
+
+
+
+
+
+
+        <button class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
+            Connect to Website Form
+        </button>
+      
+    </div>
+</div>

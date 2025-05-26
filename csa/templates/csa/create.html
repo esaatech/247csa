@@ -1,0 +1,246 @@
+{% load static %}
+
+<!-- Main Content Area -->
+<div class="p-8 max-w-full" id="createCsaForm">
+    <form id="createCsaForm" class="space-y-8">
+        <input type="hidden" id="isEdit" value="{{ is_edit|yesno:'true,false' }}">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between mb-2">
+                <div class="step-indicator active" data-step="1">Basic Info</div>
+                <div class="step-indicator" data-step="2">Knowledge Base</div>
+                <div class="step-indicator" data-step="3">Integrations & FAQ</div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="bg-blue-600 h-2.5 rounded-full" id="progressBar" style="width: 33%"></div>
+            </div>
+        </div>
+
+        <!-- Step 1: Basic Info -->
+        <div class="step-content" id="step1">
+            <h2 class="text-2xl font-bold mb-6">
+                {% if is_edit %}Edit Basic Information{% else %}Create New Customer Support Agent{% endif %}
+            </h2>
+            <div class="space-y-6 max-w-4xl">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="font-bold">CSA Name</label>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'The name that will be displayed to users when they interact with your CSA')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <input 
+                        type="text"
+                        name="name"
+                        class="w-full p-2 border rounded-md"
+                        placeholder="Enter agent name"
+                        required
+                        value="{{ csa.name|default_if_none:'' }}"
+                    >
+                </div>
+                
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="font-bold">Description</label>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'A brief description of what your CSA does and its main purpose')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <textarea 
+                        name="description"
+                        class="w-full p-2 border rounded-md h-24"
+                        placeholder="Describe what this agent does"
+                        required
+                    >{{ csa.description|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="flex justify-between">
+                    {% if is_edit %}
+                    <button 
+                        type="button"
+                        class="delete-csa bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700"
+                        data-csa-id="{{ csa.id }}"
+                    >
+                        Delete CSA
+                    </button>
+                    {% else %}
+                    <div></div> <!-- Empty div to maintain flex spacing when not in edit mode -->
+                    {% endif %}
+                    <button 
+                        type="button"
+                        class="next-step bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+                        data-next="2"
+                    >
+                        Next Step
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Knowledge Base -->
+        <div class="step-content hidden" id="step2">
+            <h2 class="text-2xl font-bold mb-6">Knowledge Base</h2>
+            <div class="space-y-6 max-w-4xl">
+                <!-- File Upload -->
+                <div class="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer" id="dropZone">
+                    <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Drop files here or click to upload
+                    </p>
+                    <p class="text-xs text-gray-500">PDF files supported</p>
+                    <input type="file" id="fileInput" class="hidden" accept=".pdf" multiple>
+                </div>
+                <div id="fileList" class="mt-4 space-y-2"></div>
+
+                <!-- URL Input -->
+                <div class="mt-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <label class="font-bold">Website URLs</label>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Add website URLs that your CSA can use as a knowledge source. The CSA will be able to reference and extract information from these websites.')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <div id="urlList" class="space-y-2"></div>
+                    <button
+                        id="addUrl"
+                        class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Add URL
+                    </button>
+                </div>
+
+                <!-- Text Input -->
+                <div class="mt-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <label class="block text-sm font-medium">Paste Text</label>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Directly paste any text content that your CSA should know about. This can include policies, procedures, or any other relevant information.')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <textarea 
+                        name="knowledge_text"
+                        class="w-full p-2 border rounded-md h-32"
+                        placeholder="Paste your text here"
+                    >{{ csa.knowledge_text|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="flex justify-between mt-8">
+                    <button 
+                        type="button"
+                        class="prev-step bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600"
+                        data-prev="1"
+                    >
+                        Previous
+                    </button>
+                    <button 
+                        type="button"
+                        class="next-step bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+                        data-next="3"
+                    >
+                        Next Step
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Integrations & FAQ -->
+        <div class="step-content hidden" id="step3">
+            <h2 class="text-2xl font-bold mb-6">Integrations & FAQ</h2>
+            <div class="space-y-6 max-w-4xl">
+                <!-- FAQ Section -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="font-bold">FAQ Entries</label>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Create interactive FAQ entries that can either provide direct answers or guide users through a series of sub-questions to find their solution')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <div id="faqList" class="space-y-4"></div>
+                    <button
+                        type="button"
+                        id="addFaq"
+                        class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Add FAQ Entry
+                    </button>
+                </div>
+
+                <!-- Channels 
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="font-bold">Platform Connections</label>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Configure how and when your CSA will be triggered to respond to users')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <div id="channelsList" class="space-y-2"></div>
+                    <button
+                        type="button"
+                        id="addChannel"
+                        class="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Add platforms
+                    </button>
+                </div>
+                -->
+                
+                <div class="mt-8">
+                    <label class="font-bold">Connect CRM</label> 
+                     <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Configure your agent to connect to your CRM')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+                    <div
+                        id="crmSection"
+                        hx-get="{% url 'csa:crm_connect' %}"
+                        hx-trigger="load"
+                        hx-target="#crmSection"
+                        hx-swap="innerHTML"
+                        class="bg-white rounded-lg shadow p-6"
+                    >
+                        <div class="text-gray-500">Loading CRM integration...</div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                        <label class="font-bold">Platform Connections</label> 
+                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Configure how and when your CSA will be triggered to respond to users')">
+                            <i data-lucide="help-circle" class="h-4 w-4"></i>
+                        </button>
+
+                <div
+                    id="platformsSection"
+                    hx-get="{% url 'platform_connections:platforms_connect' %}"
+                    hx-trigger="load"
+                    hx-target="#platformsSection"
+                    hx-swap="innerHTML"
+                    hx-vals='js:{ agent_id: window.agent_id }'
+                    class="bg-white rounded-lg shadow p-6"
+                >
+                    <div class="text-gray-500">Loading platform connections...</div>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button 
+                    type="button"
+                    class="prev-step bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600"
+                    data-prev="2"
+                >
+                    Previous
+                </button>
+                <button 
+                    type="button"
+                    class="csa-submit-button bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+                >
+                    {% if is_edit %}Update CSA{% else %}Create CSA{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+

@@ -1,0 +1,71 @@
+name: Deploy to Google Cloud VM
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: esaasolution
+  GCE_INSTANCE: csa247
+  GCE_INSTANCE_ZONE: us-central1-a
+  DOCKER_IMAGE: us-central1-docker.pkg.dev/esaasolution/csa247-repo/csa247
+
+jobs:
+  deploy:
+    name: Deploy to VM
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Google Auth
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Debug Docker Authentication
+      run: |
+        cat ~/.docker/config.json || echo "No Docker config found"
+        gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin us-central1-docker.pkg.dev
+
+    - name: Configure Docker
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+    - name: Create env file
+      run: |
+        echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+        echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+        echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
+        echo "DOCKER_ENVIRONMENT=true" >> .env
+        echo "WHATSAPP_VERIFY_TOKEN=${{ secrets.WHATSAPP_VERIFY_TOKEN }}" >> .env
+
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t $DOCKER_IMAGE:${{ github.sha }} .
+        docker push $DOCKER_IMAGE:${{ github.sha }}
+
+    - name: Deploy to VM Instance
+      run: |
+        # Create a temporary directory for project files
+        tar czf project.tar.gz ./*
+        
+        # Copy all necessary files to VM
+        gcloud compute scp project.tar.gz $GCE_INSTANCE:~/ --zone=$GCE_INSTANCE_ZONE
+        
+        # Extract and setup on VM
+        gcloud compute ssh --zone $GCE_INSTANCE_ZONE $GCE_INSTANCE --command '
+          sudo usermod -aG docker $USER
+          sudo chmod 666 /var/run/docker.sock
+          tar xzf project.tar.gz
+          sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          echo "IMAGE_TAG=${{ github.sha }}" >> .env
+          sudo docker-compose down
+          sudo docker-compose run web python manage.py collectstatic --noinput
+          sudo docker-compose up -d
+        '

@@ -1,0 +1,71 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html class="h-full bg-gray-50">
+<head>
+    <title>247CSA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{% static 'platform_connections/css/panel.css' %}">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="{% static 'csa/js/create_csa.js' %}"></script>
+        <script src="{% static 'csa/js/agent_detail.js' %}"></script>
+        <script src="{% static 'platform_connections/js/panel.js' %}"></script>
+        <script src="{% static 'platform_connections/js/platforms.js' %}"></script>
+
+
+</head>
+<body class="h-full">
+    <div class="min-h-screen flex flex-col">
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="/" class="text-blue-600 text-xl font-bold">247CSA</a>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'dashboard:dashboard' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                            <form method="POST" action="{% url 'authentication:logout' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Sign Out</button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'authentication:login' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                            <a href="{% url 'authentication:register' %}" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Sign Up</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-grow">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+
+    {% block js_scripts %}
+    {% endblock %}
+
+    <!-- Additional Scripts -->
+</body>
+</html> 

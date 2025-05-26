@@ -1,0 +1,19 @@
+<div class="space-y-2">
+    {% for csa in csas %}
+    <div 
+        data-csa-id="{{ csa.id }}"
+        onclick="storeAgentId('{{ csa.id }}')"
+        class="csa-item p-2 hover:bg-gray-50 rounded cursor-pointer"
+        hx-get="{% url 'csa:detail' pk=csa.id %}"
+        hx-target="#mainContent"
+        hx-swap="innerHTML"
+        
+    >
+        <div class="font-medium">{{ csa.name }}</div>
+        <div class="text-sm text-gray-500">{{ csa.description|truncatechars:50 }}</div>
+        <div class="text-xs text-gray-400">{{ csa.created_at|date:"M d, Y" }}</div>
+    </div>
+    {% empty %}
+    <div class="text-gray-500 text-sm p-2">No CSAs created yet</div>
+    {% endfor %}
+</div>

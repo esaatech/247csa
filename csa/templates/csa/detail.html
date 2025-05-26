@@ -1,0 +1,85 @@
+<div class="flex h-screen w-full" id="csaDetail">
+    <!-- Left Sidebar: Active Sessions List -->
+    <aside class="w-1/5 min-w-[300px] bg-white p-4 border-r overflow-y-auto">
+        <h3 class="font-medium mb-4">Active Sessions</h3>
+        <div id="sessionList" class="space-y-2">
+            <!-- Example session item -->
+            <!--
+            <div class="session-item p-2 rounded hover:bg-blue-50 cursor-pointer" data-session-id="1234">
+                <span>Session #1234</span>
+                <span class="ml-2 text-xs text-gray-400">• 2 unread</span>
+            </div>
+            -->
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between p-4 border-b bg-white">
+            <div>
+                <h2 class="text-xl font-bold" id="agentName">Agent Name</h2> <h2 class="text-2xl font-bold mb-6">{{ csa.name }}</h2>
+                <span class="text-sm text-gray-500" id="agentType">Chatbot</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Toggle: AI Handling / Human Takeover -->
+                <label class="flex items-center cursor-pointer">
+                    <span class="mr-2 text-sm">AI Handling</span>
+                    <input id="aiToggle" type="checkbox" class="hidden">
+                    <div id="toggleTrack" class="w-10 h-6 bg-gray-200 rounded-full relative transition-colors">
+                        <div id="toggleDot" class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow-md transition-all duration-300"></div>
+                    </div>
+                    <span class="ml-2 text-sm">Human Takeover</span>
+                </label>
+                <!-- Settings Icon -->
+                <button
+                    id="settingsBtn"
+                    hx-get="{% url 'csa:edit' csa.id %}"
+                    hx-target="#mainContent"
+                    hx-swap="innerHTML"
+                    class="p-2 hover:bg-gray-100 rounded"
+                    title="Settings"
+                >
+                    <i data-lucide="settings" class="h-5 w-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Content Area -->
+        <section class="flex-1 flex flex-col bg-gray-50 overflow-y-auto" id="chatArea">
+            <!-- Example message bubble -->
+            <!--
+            <div class="p-4">
+                <div class="flex flex-col gap-2">
+                    <div class="self-start bg-white rounded-lg p-3 shadow text-sm max-w-lg">
+                        <span class="font-semibold text-blue-600">AI</span>
+                        <span class="ml-2 text-xs text-gray-400">10:32 AM</span>
+                        <div>Hello! How can I help you today?</div>
+                    </div>
+                    <div class="self-end bg-blue-100 rounded-lg p-3 shadow text-sm max-w-lg">
+                        <span class="font-semibold text-green-600">You</span>
+                        <span class="ml-2 text-xs text-gray-400">10:33 AM</span>
+                        <div>I need help with my order.</div>
+                    </div>
+                </div>
+            </div>
+            -->
+        </section>
+
+        <!-- Message Input Field -->
+        <form id="chatForm" class="p-4 border-t bg-white flex gap-2" autocomplete="off">
+            <input
+                id="chatInput"
+                type="text"
+                class="flex-1 p-2 border rounded"
+                placeholder="Type your message..."
+                disabled
+            >
+            <button
+                type="submit"
+                class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                disabled
+            >Send</button>
+        </form>
+    </main>
+</div>

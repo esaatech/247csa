@@ -1,0 +1,30 @@
+<div id="platformPanelWrapper" class="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-lg z-50 transform translate-x-0 transition-transform duration-300 ease-in-out">
+  <div class="p-4 border-b flex justify-between items-center">
+    <h2 class="text-lg font-semibold">Connect to SMS (Twilio)</h2>
+    <button onclick="togglePlatformPanel()" class="text-gray-600 hover:text-red-600 text-2xl leading-none">&times;</button>
+  </div>
+  <div class="p-4 space-y-4">
+    <p>Enter your Twilio API settings to enable SMS support for your assistant.</p>
+
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium">Twilio Account SID</label>
+        <input type="text" class="w-full border p-2 rounded" placeholder="e.g. ACxxxxxxxxxxxxxxxxxx">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Twilio Auth Token</label>
+        <input type="password" class="w-full border p-2 rounded" placeholder="Your Auth Token">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Twilio Phone Number</label>
+        <input type="text" class="w-full border p-2 rounded" placeholder="e.g. +1 555 123 4567">
+      </div>
+    </div>
+
+    <div class="text-xs text-gray-500">
+      These settings will be used to send and receive SMS messages through your assistant. You can get them from your <a href="https://console.twilio.com/" target="_blank" class="text-blue-600 underline">Twilio Console</a>.
+    </div>
+  </div>
+</div>

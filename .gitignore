@@ -1,0 +1,46 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Database
+db.sqlite3
+
+# Static and Media
+
+/media/
+
+# Google Cloud
+key.json
+*.json.key
+credentials.json
+service-account.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# System
+.DS_Store
+.bfg-report/
+247csaI/
+patterns.txt
+
+script/
+
+credentials/
+# Firebase credentials
+csa-1a82c-firebase-adminsdk-fbsvc-5f3d988418.json
+
+# Environment variables
+.env
