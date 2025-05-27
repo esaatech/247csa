@@ -1,7 +1,11 @@
 {% for message in messages %}
-    {% include 'platform_connections/message.html' with message=message.message is_user=message.is_user %}
-{% empty %}
-    <div class="text-center text-gray-500 py-4">
-        No messages yet. Start the conversation!
+<div class="message {% if message.is_user %}user-message{% else %}bot-message{% endif %} mb-4">
+    <div class="{% if message.is_user %}bg-blue-100 ml-auto{% else %}bg-gray-100{% endif %} rounded-lg p-3 max-w-[80%]">
+        <p class="text-sm">{{ message.text }}</p>
     </div>
+</div>
+{% empty %}
+<div class="text-center text-gray-500 py-4">
+    No messages yet. Start the conversation!
+</div>
 {% endfor %} 

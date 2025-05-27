@@ -9,7 +9,8 @@ from platform_connections.models import BasePlatformConnection
 import json
 from django.views.decorators.http import require_http_methods
 import uuid
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 # Create your views here.
 
@@ -229,6 +230,8 @@ def disconnect_website_chat(request):
             'error': str(e)
         }, status=500)
 
+@xframe_options_exempt
+@ensure_csrf_cookie
 @require_http_methods(["GET"])
 def chat_widget(request, website_id, token):
     try:
@@ -245,9 +248,31 @@ def chat_widget(request, website_id, token):
                 'error': 'Chat connection is not active'
             }, status=403)
             
-        return render(request, 'platform_connections/chat_widget.html', {
-            'connection': connection
-        })
+        # Create a wrapper template that includes necessary scripts
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body>
+            {render(request, 'platform_connections/chat_widget.html', {
+                'connection': connection
+            }).content.decode('utf-8')}
+        </body>
+        </html>
+        """
+        
+        response = HttpResponse(html_content)
+        
+        # Add CORS headers
+        response["Access-Control-Allow-Origin"] = request.headers.get('Origin', '*')
+        response["Access-Control-Allow-Credentials"] = "true"
+        
+        return response
         
     except Exception as e:
         print(f"Error in chat_widget: {str(e)}")
@@ -261,15 +286,52 @@ def chat_widget(request, website_id, token):
             'error': str(e)
         }, status=500)
 
-@csrf_exempt
+@xframe_options_exempt
+@ensure_csrf_cookie
+@require_http_methods(["GET"])
+def chat_widget_container(request, website_id, token):
+    try:
+        print(f"Chat widget container view called with website_id: {website_id}, token: {token}")
+        print(f"Request path: {request.path}")
+        
+        # Get the website chat connection
+        connection = get_object_or_404(WebsiteChatConnection, id=website_id, iframe_token=token)
+        print(f"Found connection: {connection.id}, token: {connection.iframe_token}")
+        
+        if not connection.is_connected:
+            print(f"Connection {connection.id} is not active")
+            return JsonResponse({
+                'error': 'Chat connection is not active'
+            }, status=403)
+        
+        response = render(request, 'platform_connections/chat_widget_container.html', {
+            'connection': connection
+        })
+        response["Access-Control-Allow-Origin"] = request.headers.get('Origin', '*')
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
+    except Exception as e:
+        print(f"Error in chat_widget_container: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@xframe_options_exempt
 @require_http_methods(["POST"])
 def send_message(request, connection_id):
     """Handle incoming chat messages"""
+    print(f"Send message view called with connection_id: {connection_id}")
+    print(f"Request method: {request.method}")
+    print(f"Request POST data: {request.POST}")
+    print(f"Request headers: {request.headers}")
+    
     try:
         connection = get_object_or_404(WebsiteChatConnection, id=connection_id)
+        print(f"Found connection: {connection.id}")
+        
         message = request.POST.get('message')
+        print(f"Received message: {message}")
         
         if not message:
+            print("No message provided")
             return JsonResponse({'error': 'Message is required'}, status=400)
             
         # Here you would typically:
@@ -277,27 +339,44 @@ def send_message(request, connection_id):
         # 2. Process it through your AI/chat system
         # 3. Return the response
         
-        return render(request, 'platform_connections/message.html', {
+        response = render(request, 'platform_connections/message.html', {
             'message': message,
             'is_user': True
         })
         
+        # Add CORS headers
+        response["Access-Control-Allow-Origin"] = request.headers.get('Origin', '*')
+        response["Access-Control-Allow-Credentials"] = "true"
+        
+        return response
+        
     except Exception as e:
+        print(f"Error in send_message: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
+@xframe_options_exempt
 @require_http_methods(["GET"])
 def get_messages(request, connection_id):
     """Get chat history"""
+    print(f"Get messages view called with connection_id: {connection_id}")
     try:
         connection = get_object_or_404(WebsiteChatConnection, id=connection_id)
+        print(f"Found connection: {connection.id}")
         
         # Here you would typically:
         # 1. Fetch message history from your database
         # 2. Return the messages
         
-        return render(request, 'platform_connections/messages.html', {
+        response = render(request, 'platform_connections/messages.html', {
             'messages': []  # Replace with actual messages
         })
         
+        # Add CORS headers
+        response["Access-Control-Allow-Origin"] = request.headers.get('Origin', '*')
+        response["Access-Control-Allow-Credentials"] = "true"
+        
+        return response
+        
     except Exception as e:
+        print(f"Error in get_messages: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)

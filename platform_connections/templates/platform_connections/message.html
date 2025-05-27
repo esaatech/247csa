@@ -1,5 +1,5 @@
-<div class="flex {% if is_user %}justify-end{% else %}justify-start{% endif %}">
-    <div class="max-w-[70%] rounded-lg p-3 {% if is_user %}bg-blue-600 text-white{% else %}bg-gray-100{% endif %}">
-        {{ message }}
+<div class="message {% if is_user %}user-message{% else %}bot-message{% endif %} mb-4">
+    <div class="{% if is_user %}bg-blue-100 ml-auto{% else %}bg-gray-100{% endif %} rounded-lg p-3 max-w-[80%]">
+        <p class="text-sm">{{ message }}</p>
     </div>
 </div> 

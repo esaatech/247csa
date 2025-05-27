@@ -1,66 +1,55 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Widget</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-        .input-container {
-            padding: 1rem;
-            border-top: 1px solid #e5e7eb;
-            background: white;
-        }
-    </style>
-</head>
-<body class="bg-gray-50">
-    <div class="chat-container">
-        <div class="bg-blue-600 text-white p-4">
-            <h2 class="text-lg font-semibold">Chat with us</h2>
-        </div>
-        
-        <div id="messages" class="messages-container" 
-             hx-get="{% url 'platform_connections:get_messages' connection.id %}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-        </div>
-        
-        <form class="input-container"
-              hx-post="{% url 'platform_connections:send_message' connection.id %}"
-              hx-target="#messages"
-              hx-swap="beforeend">
-            <div class="flex gap-2">
-                <input type="text" 
-                       name="message" 
-                       class="flex-1 p-2 border rounded"
-                       placeholder="Type your message..."
-                       required>
-                <button type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Send
-                </button>
-            </div>
-        </form>
+<div class="chat-container h-full flex flex-col">
+    <div class="bg-blue-600 text-white p-4">
+        <h2 class="text-lg font-semibold">Chat with us</h2>
     </div>
-</body>
-</html> 
+    
+    <div id="messages" class="messages-container flex-1 overflow-y-auto p-4" 
+         hx-get="{% url 'platform_connections:get_messages' connection.id %}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+    </div>
+    
+    <form class="input-container p-4 border-t border-gray-200 bg-white"
+          method="POST"
+          action="{% url 'platform_connections:send_message' connection.id %}"
+          hx-post="{% url 'platform_connections:send_message' connection.id %}"
+          hx-target="#messages"
+          hx-swap="beforeend"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        {% csrf_token %}
+        <div class="flex gap-2">
+            <input type="text" 
+                   name="message" 
+                   class="flex-1 p-2 border rounded"
+                   placeholder="Type your message..."
+                   required>
+            <button type="submit" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Send
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .chat-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+    }
+    .input-container {
+        padding: 1rem;
+        border-top: 1px solid #e5e7eb;
+        background: white;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+    }
+</style> 

@@ -12,9 +12,20 @@
     {% if is_connected %}
     <p>To add the chat widget to your website, copy and paste the code below into your site's HTML (before the closing <code>&lt;/body&gt;</code> tag):</p>
 
-    <div class="bg-gray-100 text-sm p-3 rounded font-mono overflow-x-auto">
-      &lt;iframe src="http://localhost:8000/platform_connections/widget/chat/{{ connection_id }}/{{ token }}" style="width: 100%; height: 500px; border: none;"&gt;&lt;/iframe&gt;
+    <div class="bg-gray-100 text-sm p-3 rounded font-mono overflow-x-auto flex items-center gap-2">
+      <span id="iframeCode" style="user-select: all;">
+        &lt;iframe src="http://localhost:8000/platform_connections/widget/chat/{{ connection_id }}/{{ token }}/container/" style="position: fixed; inset: 0; width: 100vw; height: 100vh; background: transparent; border: none; z-index: 2147483647;" allowtransparency="true" frameborder="0"&gt;&lt;/iframe&gt;
+      </span>
+      <button onclick="copyIframeCode()" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Copy</button>
     </div>
+    <script>
+      function copyIframeCode() {
+        const code = document.getElementById('iframeCode').innerText;
+        navigator.clipboard.writeText(code).then(function() {
+          alert('Iframe code copied to clipboard!');
+        });
+      }
+    </script>
 
     <p class="text-xs text-gray-500">This iframe is unique to your agent and allows your customers to chat directly from your website.</p>
     {% else %}

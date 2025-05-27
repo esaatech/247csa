@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Widget</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: transparent !important;
+            overflow: visible;
+        }
+        body {
+            pointer-events: none;
+        }
+        .chat-fab, .chat-popup {
+            pointer-events: auto !important;
+        }
+        .chat-fab {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 2147483647;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            cursor: pointer !important;
+            font-size: 2rem;
+            border: none;
+            outline: none;
+            transition: background 0.2s;
+        }
+        .chat-fab:hover, .chat-fab:focus {
+            background: #1746a2;
+            cursor: pointer !important;
+        }
+        .chat-popup {
+            position: fixed;
+            bottom: 100px;
+            right: 32px;
+            width: 370px;
+            max-width: 95vw;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            z-index: 2147483647;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-popup.open {
+            display: flex;
+            animation: fadeInUp 0.3s;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 1.5rem;
+            color: #888;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body style="background: transparent !important;">
+    <!-- Floating Action Button -->
+    <button class="chat-fab" id="chatFab" title="Chat with us" role="button" tabindex="0" aria-label="Open chat">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75V19.5A2.25 2.25 0 006.75 21.75h10.5A2.25 2.25 0 0019.5 19.5V9.75" />
+        </svg>
+    </button>
+
+    <!-- Chat Popup -->
+    <div class="chat-popup" id="chatPopup">
+        <button class="chat-close" id="chatCloseBtn" title="Close">&times;</button>
+        <div id="chatWidgetContent" class="flex-1 h-full">
+            <!-- Chat widget will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        console.log('Chat widget container loaded');
+        const chatFab = document.getElementById('chatFab');
+        const chatPopup = document.getElementById('chatPopup');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+        const chatWidgetContent = document.getElementById('chatWidgetContent');
+        let chatLoaded = false;
+
+        chatFab.addEventListener('click', function() {
+            if (chatPopup.classList.contains('open')) {
+                chatPopup.classList.remove('open');
+            } else {
+                chatPopup.classList.add('open');
+                if (!chatLoaded) {
+                    chatWidgetContent.innerHTML = '';
+                    // Load the chat widget HTML via HTMX
+                    chatWidgetContent.setAttribute('hx-get', window.location.pathname.replace('/container', ''));
+                    chatWidgetContent.setAttribute('hx-trigger', 'load');
+                    chatWidgetContent.setAttribute('hx-swap', 'innerHTML');
+                    htmx.process(chatWidgetContent);
+                    chatLoaded = true;
+                }
+            }
+        });
+
+        chatCloseBtn.addEventListener('click', function() {
+            chatPopup.classList.remove('open');
+        });
+    </script>
+</body>
+</html> 
