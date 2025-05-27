@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'dashboard',
     'social_django',
     'home',
@@ -34,6 +35,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -149,3 +151,14 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
+# Security settings for iframe embedding
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+CSP_FRAME_ANCESTORS = ["'self'", "*"]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# Add security middleware settings
+SECURE_CONTENT_TYPE_NOSNIFF = False
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_SSL_REDIRECT = False

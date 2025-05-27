@@ -578,6 +578,21 @@ rcssmin = "1.1.2"
 rjsmin = "1.2.2"
 
 [[package]]
+name = "django-cors-headers"
+version = "4.7.0"
+description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "django_cors_headers-4.7.0-py3-none-any.whl", hash = "sha256:f1c125dcd58479fe7a67fe2499c16ee38b81b397463cf025f0e2c42937421070"},
+    {file = "django_cors_headers-4.7.0.tar.gz", hash = "sha256:6fdf31bf9c6d6448ba09ef57157db2268d515d94fc5c89a0a1028e1fc03ee52b"},
+]
+
+[package.dependencies]
+asgiref = ">=3.6"
+django = ">=4.2"
+
+[[package]]
 name = "django-crm"
 version = "0.9.0"
 description = "An opensourse CRM developed on django framework"
@@ -2353,4 +2368,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1586dbe3e854e42f6eeb9c37fbb7852adc83b88f9ee0c8e1808922efbaf7eec2"
+content-hash = "93b4d4e1971132e5a396e26b59bee64fcf51f39ecdf78dd84fa84804c8748b93"

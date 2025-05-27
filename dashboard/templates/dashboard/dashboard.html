@@ -9,7 +9,7 @@
 <input type="hidden" id="chatId" value="7c9e6679-7425-40de-944b-e07fc1f90ae9" />
 
     <!-- Left Navigation -->
-    <div class="w-1/5 min-w-[300px] bg-white p-4 border-r">
+    <div class="w-1/5 min-w-[300px] bg-white p-4 border-r h-screen flex flex-col">
         <button 
             id="createButton"
             class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 mb-4"
@@ -22,7 +22,7 @@
         </button>
         
         <!-- CSA List -->
-        <div class="mt-4">
+        <div class="mt-4 flex-1 overflow-y-auto">
             <h3 class="font-medium mb-2">Your CSAs</h3>
             <div 
                 id="csaList"

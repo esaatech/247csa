@@ -9,13 +9,17 @@
   </div>
 
   <div class="p-4 space-y-4">
+    {% if is_connected %}
     <p>To add the chat widget to your website, copy and paste the code below into your site's HTML (before the closing <code>&lt;/body&gt;</code> tag):</p>
 
     <div class="bg-gray-100 text-sm p-3 rounded font-mono overflow-x-auto">
-      &lt;iframe src="https://247csa.com/widget/chat?website_id={{ chat_id.id }}&amp;token={{ token }}" style="width: 100%; height: 500px; border: none;"&gt;&lt;/iframe&gt;
+      &lt;iframe src="http://localhost:8000/platform_connections/widget/chat/{{ connection_id }}/{{ token }}" style="width: 100%; height: 500px; border: none;"&gt;&lt;/iframe&gt;
     </div>
 
     <p class="text-xs text-gray-500">This iframe is unique to your agent and allows your customers to chat directly from your website.</p>
+    {% else %}
+    <p class="text-gray-600">Connect your website chat to get the integration code.</p>
+    {% endif %}
 
     <!-- Connect/Disconnect Buttons -->
     <div class="website-chat-config space-y-2">
@@ -26,7 +30,7 @@
         <button 
             type="button"
             id="connectButton"
-            onclick="connectWebsiteChat(document.getElementById('agentId').value, document.getElementById('token').value)"
+            onclick="connectWebsiteChat('{{ chat_id.id }}', '{{ token }}')"
             class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 {% if is_connected %}hidden{% endif %}"
         >
             Connect
@@ -36,7 +40,7 @@
         <button 
             type="button"
             id="disconnectButton"
-            onclick="disconnectWebsiteChat(document.getElementById('agentId').value)"
+            onclick="disconnectWebsiteChat('{{ chat_id.id }}')"
             class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 {% if not is_connected %}hidden{% endif %}"
         >
             Disconnect

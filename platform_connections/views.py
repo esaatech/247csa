@@ -1,11 +1,5 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.contrib.contenttypes.models import ContentType
-from platform_connections.models import PlatformConnection
-from csa.models import CSA
-from secrets import token_urlsafe
-from django.shortcuts import render
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from platform_connections.models import PlatformConnection
 from csa.models import CSA
@@ -15,6 +9,7 @@ from platform_connections.models import BasePlatformConnection
 import json
 from django.views.decorators.http import require_http_methods
 import uuid
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
@@ -63,14 +58,17 @@ def website_chat_config(request):
 
             try:
                 agent_uuid = uuid.UUID(agent_id)
+                print(f"Creating/updating connection for agent: {agent_uuid}")
 
                 # Try to get existing connection
                 connection = WebsiteChatConnection.objects.filter(agent_id=agent_uuid).first()
                 
                 if connection:
+                    print(f"Found existing connection: {connection.id}")
                     # Only update is_connected status, keep the same token
                     connection.is_connected = True
                     connection.save()
+                    print(f"Updated connection {connection.id} to connected")
                 else:
                     # Create new connection with the token
                     connection = WebsiteChatConnection.objects.create(
@@ -80,6 +78,7 @@ def website_chat_config(request):
                         allowed_domains=["example.com"],
                         is_connected=True
                     )
+                    print(f"Created new connection: {connection.id}")
 
                 return JsonResponse({
                     'success': True,
@@ -88,12 +87,14 @@ def website_chat_config(request):
                 })
 
             except ValueError:
+                print(f"Invalid UUID format for agent_id: {agent_id}")
                 return JsonResponse({
                     'success': False,
                     'error': 'Invalid agent ID format.'
                 }, status=400)
                 
         except json.JSONDecodeError:
+            print("Invalid JSON data received")
             return JsonResponse({
                 'success': False,
                 'error': 'Invalid JSON data'
@@ -117,11 +118,15 @@ def website_chat_config(request):
         # Initialize default values
         token = token_urlsafe(32)
         is_connected = False
+        existing_connection = None  # Initialize existing_connection
+        
+        # Use new_agent_id if provided, otherwise use agent_id
+        active_agent_id = new_agent_id if new_agent_id and new_agent_id != 'null' else agent_id
         
         # Check if connection exists and get its token
-        if agent_id and agent_id != 'null':  # Add check for 'null' string
+        if active_agent_id and active_agent_id != 'null':  # Add check for 'null' string
             try:
-                agent_uuid = uuid.UUID(agent_id)
+                agent_uuid = uuid.UUID(active_agent_id)
                 existing_connection = WebsiteChatConnection.objects.filter(agent_id=agent_uuid).first()
                 
                 if existing_connection:
@@ -129,12 +134,13 @@ def website_chat_config(request):
                     is_connected = existing_connection.is_connected
                     
             except ValueError:
-                print(f"Invalid UUID format for agent_id: {agent_id}")
+                print(f"Invalid UUID format for agent_id: {active_agent_id}")
                 # Keep default values
 
         return render(request, 'platform_connections/website_chat_config.html', {
             'title': 'Connect to Website Chat',
-            'chat_id': {'id': new_agent_id},
+            'chat_id': {'id': active_agent_id},
+            'connection_id': existing_connection.id if existing_connection and is_connected else None,
             'token': token,
             'is_connected': is_connected
         })
@@ -166,11 +172,16 @@ def get_agent_connections(request, agent_id):
 
 @require_http_methods(["POST"])
 def disconnect_website_chat(request):
+    print("Disconnect website chat called")
     try:
+        print("Request body:", request.body)
         data = json.loads(request.body)
+        print("Parsed data:", data)
         agent_id = data.get('agent_id')
+        print("Agent ID:", agent_id)
         
         if not agent_id:
+            print("Missing agent ID")
             return JsonResponse({
                 'success': False,
                 'error': 'Missing agent ID'
@@ -178,36 +189,115 @@ def disconnect_website_chat(request):
 
         try:
             agent_uuid = uuid.UUID(agent_id)
+            print(f"Looking for connection with agent_id: {agent_uuid}")
             # Update the connection status instead of deleting
             connection = WebsiteChatConnection.objects.filter(agent_id=agent_uuid).first()
             
             if connection:
+                print(f"Found connection: {connection.id}")
                 connection.is_connected = False
                 connection.save()
+                print(f"Updated connection {connection.id} to disconnected")
                 return JsonResponse({
                     'success': True,
                     'message': 'Website chat disconnected successfully.'
                 })
             else:
+                print("No connection found")
                 return JsonResponse({
                     'success': False,
                     'error': 'No active connection found'
                 }, status=404)
 
-        except ValueError:
+        except ValueError as e:
+            print(f"Invalid UUID error: {str(e)}")
             return JsonResponse({
                 'success': False,
                 'error': 'Invalid agent ID format'
             }, status=400)
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': 'Invalid JSON data'
         }, status=400)
     except Exception as e:
-        print("Error in disconnect_website_chat:", str(e))
+        print(f"Error in disconnect_website_chat: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)
         }, status=500)
+
+@require_http_methods(["GET"])
+def chat_widget(request, website_id, token):
+    try:
+        print(f"Chat widget view called with website_id: {website_id}, token: {token}")
+        print(f"Request path: {request.path}")
+        
+        # Get the website chat connection
+        connection = get_object_or_404(WebsiteChatConnection, id=website_id, iframe_token=token)
+        print(f"Found connection: {connection.id}, token: {connection.iframe_token}")
+        
+        if not connection.is_connected:
+            print(f"Connection {connection.id} is not active")
+            return JsonResponse({
+                'error': 'Chat connection is not active'
+            }, status=403)
+            
+        return render(request, 'platform_connections/chat_widget.html', {
+            'connection': connection
+        })
+        
+    except Exception as e:
+        print(f"Error in chat_widget: {str(e)}")
+        print(f"Connection details - ID: {website_id}, Token: {token}")
+        # Print all connections for debugging
+        all_connections = WebsiteChatConnection.objects.all()
+        print("All connections in database:")
+        for conn in all_connections:
+            print(f"ID: {conn.id}, Token: {conn.iframe_token}, Connected: {conn.is_connected}")
+        return JsonResponse({
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def send_message(request, connection_id):
+    """Handle incoming chat messages"""
+    try:
+        connection = get_object_or_404(WebsiteChatConnection, id=connection_id)
+        message = request.POST.get('message')
+        
+        if not message:
+            return JsonResponse({'error': 'Message is required'}, status=400)
+            
+        # Here you would typically:
+        # 1. Save the message to your database
+        # 2. Process it through your AI/chat system
+        # 3. Return the response
+        
+        return render(request, 'platform_connections/message.html', {
+            'message': message,
+            'is_user': True
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+def get_messages(request, connection_id):
+    """Get chat history"""
+    try:
+        connection = get_object_or_404(WebsiteChatConnection, id=connection_id)
+        
+        # Here you would typically:
+        # 1. Fetch message history from your database
+        # 2. Return the messages
+        
+        return render(request, 'platform_connections/messages.html', {
+            'messages': []  # Replace with actual messages
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

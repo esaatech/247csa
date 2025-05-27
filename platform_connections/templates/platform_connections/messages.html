@@ -1,0 +1,7 @@
+{% for message in messages %}
+    {% include 'platform_connections/message.html' with message=message.message is_user=message.is_user %}
+{% empty %}
+    <div class="text-center text-gray-500 py-4">
+        No messages yet. Start the conversation!
+    </div>
+{% endfor %} 

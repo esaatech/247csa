@@ -21,10 +21,18 @@ async function connectWebsiteChat(agentId, token) {
         if (data.success) {
             // Update main connect button to show connected state
             updateConnectButton('website_chat', true);
-            // Show disconnect button in config panel
-            showDisconnectButton(agentId);
             // Show success message
             showToast('Website chat connected successfully');
+            
+            // Refresh the panel content to show iframe code
+            const panelContainer = document.getElementById('platformPanelContainer');
+            if (panelContainer) {
+                const response = await fetch(`/platform_connections/platforms-connect/website/?agent_id=${agentId}`);
+                const html = await response.text();
+                panelContainer.innerHTML = html;
+                // Reattach event listeners after refresh
+                attachEventListeners();
+            }
         } else {
             showToast(data.error || 'Failed to connect website chat', 'error');
         }
@@ -36,35 +44,71 @@ async function connectWebsiteChat(agentId, token) {
 
 // Function to handle disconnection
 async function disconnectWebsiteChat(agentId) {
+    console.log("Disconnecting website chat for agent:", agentId);
+    
+    // Validate agent ID
+    if (!agentId || agentId === 'None' || agentId === 'null') {
+        console.error("Invalid agent ID:", agentId);
+        showToast('Invalid agent ID', 'error');
+        return;
+    }
+    
     try {
+        const requestBody = {
+            agent_id: agentId
+        };
+        console.log("Sending disconnect request with body:", requestBody);
+        
         const response = await fetch('/platform_connections/platforms-connect/website/disconnect/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({
-                agent_id: agentId
-            })
+            body: JSON.stringify(requestBody)
         });
 
+        console.log("Disconnect response status:", response.status);
         const data = await response.json();
+        console.log("Disconnect response data:", data);
         
         if (data.success) {
             // Update UI to show disconnected state
             updateConnectButton('website_chat', false);
-            // Hide disconnect button in config panel
-            document.getElementById('disconnectButton').classList.add('hidden');
-            // Show connect button
-            document.getElementById('connectButton').classList.remove('hidden');
             // Show success message
             showToast('Website chat disconnected successfully');
+            
+            // Refresh the panel content to hide iframe code
+            const panelContainer = document.getElementById('platformPanelContainer');
+            if (panelContainer) {
+                const response = await fetch(`/platform_connections/platforms-connect/website/?agent_id=${agentId}`);
+                const html = await response.text();
+                panelContainer.innerHTML = html;
+                // Reattach event listeners after refresh
+                attachEventListeners();
+            }
         } else {
             showToast(data.error || 'Failed to disconnect website chat', 'error');
         }
     } catch (error) {
         console.error('Error disconnecting website chat:', error);
         showToast('Failed to disconnect website chat', 'error');
+    }
+}
+
+// Function to attach event listeners
+function attachEventListeners() {
+    const connectButton = document.getElementById('connectButton');
+    const disconnectButton = document.getElementById('disconnectButton');
+    const agentId = document.getElementById('agentId')?.value;
+    const token = document.getElementById('token')?.value;
+
+    if (connectButton && agentId && token && agentId !== 'None' && agentId !== 'null') {
+        connectButton.onclick = () => connectWebsiteChat(agentId, token);
+    }
+
+    if (disconnectButton && agentId && agentId !== 'None' && agentId !== 'null') {
+        disconnectButton.onclick = () => disconnectWebsiteChat(agentId);
     }
 }
 
