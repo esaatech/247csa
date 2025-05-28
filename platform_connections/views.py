@@ -244,11 +244,9 @@ def chat_widget(request, website_id, token):
         
         if not connection.is_connected:
             print(f"Connection {connection.id} is not active")
-            return JsonResponse({
-                'error': 'Chat connection is not active'
-            }, status=403)
-            
-        # Create a wrapper template that includes necessary scripts
+            # Return empty response, 200 OK
+            return HttpResponse("")
+        
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -300,9 +298,8 @@ def chat_widget_container(request, website_id, token):
         
         if not connection.is_connected:
             print(f"Connection {connection.id} is not active")
-            return JsonResponse({
-                'error': 'Chat connection is not active'
-            }, status=403)
+            # Return empty response, 200 OK
+            return HttpResponse("")
         
         response = render(request, 'platform_connections/chat_widget_container.html', {
             'connection': connection

@@ -169,3 +169,12 @@ function showToast(message, type = 'success') {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
+
+function copyIframeCode() {
+    console.log("copyIframeCode called");
+    const code = document.getElementById('iframeCode').innerText;
+    navigator.clipboard.writeText(code).then(function() {
+        // Optionally, show a toast or alert
+       // alert('Iframe code copied to clipboard!');
+    });
+}
