@@ -1,8 +1,7 @@
 {# Chat Widget Template #}
 {# This template displays the chat widget for a website chat connection #}
-{# It uses HTMX for dynamic updates and Tailwind CSS for styling #}
+{# It uses WebSocket for real-time communication and Tailwind CSS for styling #}
 
-{# Main container with vertical spacing between items #}
 {% load static %}
 <div class="chat-container h-full flex flex-col">
     <div class="bg-blue-600 text-white p-4">
@@ -10,17 +9,11 @@
     </div>
     
     <div id="messages" 
-         class="messages-container flex-1 overflow-y-auto p-4">
+         class="messages-container flex-1 overflow-y-auto p-4 space-y-4">
         <!-- Messages will be loaded here -->
     </div>
     
-    <form class="input-container p-4 border-t border-gray-200 bg-white"
-          method="POST"
-          action="{% url 'platform_connections:send_message' connection.id %}"
-          hx-post="{% url 'platform_connections:send_message' connection.id %}"
-          hx-target="#messages"
-          hx-swap="beforeend"
-          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <form class="input-container p-4 border-t border-gray-200 bg-white">
         {% csrf_token %}
         <input type="hidden" name="browser_session_id" id="browserSessionId">
         <input type="hidden" name="session_id" id="chatSessionId">
@@ -39,13 +32,32 @@
 </div>
 
 <script>
+    console.log('[chat_widget] Chat widget loaded');
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+     setBrowserSessionIdInput();
+    initChatSessionAndSocket();
+
     function getBrowserSessionId() {
         let sessionId = localStorage.getItem('chat_browser_session_id');
         if (!sessionId) {
             sessionId = 'browser_' + Math.random().toString(36).substring(2, 15);
             localStorage.setItem('chat_browser_session_id', sessionId);
         }
-        console.log('[chat_widget] getBrowserSessionId:', sessionId);
         return sessionId;
     }
 
@@ -53,61 +65,102 @@
         const input = document.getElementById('browserSessionId');
         if (input) {
             input.value = getBrowserSessionId();
-            console.log('[chat_widget] Set browserSessionId input value:', input.value);
-        } else {
-            console.log('[chat_widget] browserSessionId input not found');
         }
     }
 
+    function addMessageToChat(message, isUser) {
+        const messagesDiv = document.getElementById('messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+        
+        const messageBubble = document.createElement('div');
+        messageBubble.className = `max-w-[70%] rounded-lg px-4 py-2 ${
+            isUser ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
+        }`;
+        messageBubble.textContent = message;
+        
+        msgDiv.appendChild(messageBubble);
+        messagesDiv.appendChild(msgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    let socket = null;
+
+    function initChatSessionAndSocket() {
+        console.log('[chat_widget] initChatSessionAndSocket');
+        const browserSessionId = getBrowserSessionId();
+        const connectionId = "{{ connection.id }}";
+        
+        fetch(`/platform_connections/widget/chat/${connectionId}/init_session/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ browser_session_id: browserSessionId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.session_id) {
+                document.getElementById('chatSessionId').value = data.session_id;
+                openWebSocketWithSessionId(data.session_id);
+            } else {
+                console.error('Failed to initialize chat session:', data);
+            }
+        })
+        .catch(err => {
+            console.error('Error initializing chat session:', err);
+        });
+    }
+
+    function openWebSocketWithSessionId(sessionId) {
+        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        socket = new WebSocket(`${ws_scheme}://${window.location.host}/ws/chat/${sessionId}/`);
+
+        socket.onopen = function() {
+            console.log('[WebSocket] Connected');
+        };
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log('[WebSocket] message received:', data);
+            addMessageToChat(data.message, data.is_user);
+        };
+
+        socket.onclose = function() {
+            console.log('[WebSocket] Disconnected');
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => {
+                if (document.getElementById('chatSessionId').value) {
+                    openWebSocketWithSessionId(document.getElementById('chatSessionId').value);
+                }
+            }, 5000);
+        };
+    }
+
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         console.log('[chat_widget] DOMContentLoaded');
         setBrowserSessionIdInput();
+        initChatSessionAndSocket();
     });
 
-    // Set it after any HTMX swap (e.g., after form is loaded/swapped in)
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        console.log('[chat_widget] htmx:afterSwap');
-        setBrowserSessionIdInput();
-    });
-
-    // Set it right before the form is submitted via HTMX
-    document.querySelector('form').addEventListener('htmx:configRequest', function(evt) {
-        setBrowserSessionIdInput();
-        console.log('[chat_widget] htmx:configRequest - browserSessionId:', document.getElementById('browserSessionId').value);
-    });
-
-    // Set up SSE connection when we get a session ID
-    function setupSSE(sessionId) {
-        if (!sessionId) {
-            console.log('[chat_widget] setupSSE called with empty sessionId');
-            return;
+    // Handle form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = this.querySelector('input[name="message"]');
+        const message = input.value.trim();
+        
+        if (message && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                'message': message,
+                'is_user': true
+            }));
+            //addMessageToChat(message, true);
+            input.value = '';
+        } else {
+            console.log('[chat_widget] WebSocket not open, message not sent.');
         }
-        const messagesDiv = document.getElementById('messages');
-        const sseUrl = `/platform_connections/chat/events/${sessionId}/`;
-        if (messagesDiv.getAttribute('hx-sse')) {
-            messagesDiv.removeAttribute('hx-sse');
-        }
-        messagesDiv.setAttribute('hx-sse', `connect:${sseUrl}`);
-        htmx.process(messagesDiv);
-        console.log('[chat_widget] setupSSE: connected to', sseUrl);
-    }
-
-    // Handle form submission response
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.target.id === 'messages') {
-            const sessionId = evt.detail.xhr.getResponseHeader('X-Session-ID');
-            console.log('[chat_widget] htmx:afterSwap (messages) - X-Session-ID:', sessionId);
-            if (sessionId) {
-                document.getElementById('chatSessionId').value = sessionId;
-                setupSSE(sessionId);
-            }
-        }
-    });
-
-    // Add SSE message debug log
-    document.body.addEventListener('htmx:sseMessage', function(evt) {
-        console.log('[chat_widget] SSE message received:', evt.detail.data);
-        // You can add code here to display the message if needed
     });
 </script>
 

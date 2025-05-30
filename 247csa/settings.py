@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'triggers',
     'platform_connections',
     'chatui',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -199,3 +200,11 @@ CSRF_TRUSTED_ORIGINS = [
 SECURE_CONTENT_TYPE_NOSNIFF = False
 SECURE_BROWSER_XSS_FILTER = False
 SECURE_SSL_REDIRECT = False
+
+# Channels
+ASGI_APPLICATION = '247csa.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}

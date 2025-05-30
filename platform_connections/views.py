@@ -14,6 +14,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from .models import ChatSession, Message
 import asyncio
 from asgiref.sync import sync_to_async
+from django.views.decorators.http import require_POST
 
 # Create your views here.
 
@@ -474,3 +475,39 @@ async def chat_events(request, session_id):
     response["Access-Control-Allow-Origin"] = request.headers.get('Origin', '*')
     response["Access-Control-Allow-Credentials"] = "true"
     return response
+
+@csrf_exempt
+def init_chat_session(request, connection_id):
+    """Initialize or get a chat session for the chat widget browser session ID."""
+    print(f"............Init chat session view called with connection_id:......... {connection_id}")
+    import json
+    try:
+        connection = get_object_or_404(WebsiteChatConnection, id=connection_id)
+        data = json.loads(request.body.decode('utf-8'))
+        browser_session_id = data.get('browser_session_id')
+        if not browser_session_id:
+            return JsonResponse({'error': 'browser_session_id required'}, status=400)
+        session_tracking = connection.session_tracking or {}
+        chat_session_id = session_tracking.get(browser_session_id)
+        if chat_session_id:
+            try:
+                chat_session = ChatSession.objects.get(id=chat_session_id)
+            except ChatSession.DoesNotExist:
+                chat_session = None
+        else:
+            chat_session = None
+        if not chat_session:
+            chat_session = ChatSession.objects.create(
+                agent_id=connection.agent_id,
+                platform_type='website',
+                user_identifier=browser_session_id
+            )
+            session_tracking[browser_session_id] = str(chat_session.id)
+            connection.session_tracking = session_tracking
+            connection.save()
+        return JsonResponse({'session_id': str(chat_session.id)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
