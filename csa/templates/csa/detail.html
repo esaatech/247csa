@@ -8,6 +8,22 @@
              hx-swap="innerHTML">
             <!-- Chat sessions will be loaded here by HTMX -->
         </div>
+        <script>
+        (function() {
+            const dashboardSocket = new WebSocket(
+                (window.location.protocol === "https:" ? "wss://" : "ws://") +
+                window.location.host +
+                "/ws/agent_dashboard/"
+            );
+            dashboardSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.event === 'new_session') {
+                    // Trigger an HTMX refresh of the session list
+                    htmx.ajax('GET', '{% url "platform_connections:chat_session_list" csa.id %}', '#sessionList');
+                }
+            };
+        })();
+        </script>
     </aside>
 
     <!-- Main Content Area -->

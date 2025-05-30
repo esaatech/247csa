@@ -15,6 +15,9 @@ from .models import ChatSession, Message
 import asyncio
 from asgiref.sync import sync_to_async
 from django.views.decorators.http import require_POST
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from .consumers import notify_session_ended
 
 # Create your views here.
 
@@ -505,9 +508,39 @@ def init_chat_session(request, connection_id):
             session_tracking[browser_session_id] = str(chat_session.id)
             connection.session_tracking = session_tracking
             connection.save()
+            # Notify dashboard
+            notify_agent_dashboard({
+                'event': 'new_session',
+                'session_id': str(chat_session.id),
+                'user_identifier': browser_session_id,
+                'platform_type': 'website',
+                # Add more fields as needed
+            })
         return JsonResponse({'session_id': str(chat_session.id)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+def notify_agent_dashboard(data):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        'agent_dashboard',
+        {
+            'type': 'session_update',
+            'data': data
+        }
+    )
+
+@require_POST
+def end_chat_session(request, session_id):
+    try:
+        chat_session = ChatSession.objects.get(id=session_id)
+        chat_session.is_active = False
+        chat_session.save()
+        # Notify both agent and user via WebSocket
+        notify_session_ended(session_id)
+        return JsonResponse({'success': True})
+    except ChatSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
 
 
 

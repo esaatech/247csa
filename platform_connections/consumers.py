@@ -2,6 +2,8 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .models import ChatSession, Message, WebsiteChatConnection
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -62,3 +64,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         except ChatSession.DoesNotExist:
             print(f"Chat session {self.session_id} not found")
+
+    async def session_ended(self, event):
+        await self.send(text_data=json.dumps({
+            'event': 'session_ended',
+            'message': event['message']
+        }))
+
+class AgentDashboardConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.group_name = 'agent_dashboard'
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def session_update(self, event):
+        # Send the update to the agent dashboard
+        await self.send(text_data=json.dumps(event['data']))
+
+def notify_session_ended(session_id):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f'chat_{session_id}',
+        {
+            'type': 'session_ended',
+            'message': 'This chat session has been ended by the agent/user.'
+        }
+    )

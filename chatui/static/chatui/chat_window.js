@@ -68,13 +68,40 @@ function attachChatFormHandler() {
     });
 }
 
-// Attach on initial load
+// Attach on initial load and after HTMX swaps
 function initializeChatWindow() {
     const form = document.getElementById('chatInputForm');
     if (!form) return;
     const sessionId = form.getAttribute('data-session-id');
     openAgentWebSocket(sessionId);
     attachChatFormHandler();
+
+    // Attach End Chat button handler
+    const endBtn = document.getElementById('endChatBtn');
+    if (endBtn) {
+        endBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to end this chat?')) {
+                fetch(`/platform_connections/end_chat_session/${sessionId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Chat ended.');
+                        // Optionally, disable input or close chat window here
+                    } else {
+                        alert('Failed to end chat: ' + (data.error || 'Unknown error'));
+                    }
+                });
+            }
+        });
+    } else {
+        console.log('End chat button not found!');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
