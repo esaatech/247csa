@@ -1,13 +1,17 @@
+{# Chat Widget Template #}
+{# This template displays the chat widget for a website chat connection #}
+{# It uses HTMX for dynamic updates and Tailwind CSS for styling #}
+
+{# Main container with vertical spacing between items #}
 {% load static %}
 <div class="chat-container h-full flex flex-col">
     <div class="bg-blue-600 text-white p-4">
         <h2 class="text-lg font-semibold">Chat with us</h2>
     </div>
     
-    <div id="messages" class="messages-container flex-1 overflow-y-auto p-4" 
-         hx-get="{% url 'platform_connections:get_messages' connection.id %}"
-         hx-trigger="load"
-         hx-swap="innerHTML">
+    <div id="messages" 
+         class="messages-container flex-1 overflow-y-auto p-4">
+        <!-- Messages will be loaded here -->
     </div>
     
     <form class="input-container p-4 border-t border-gray-200 bg-white"
@@ -18,6 +22,8 @@
           hx-swap="beforeend"
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         {% csrf_token %}
+        <input type="hidden" name="browser_session_id" id="browserSessionId">
+        <input type="hidden" name="session_id" id="chatSessionId">
         <div class="flex gap-2">
             <input type="text" 
                    name="message" 
@@ -31,6 +37,79 @@
         </div>
     </form>
 </div>
+
+<script>
+    function getBrowserSessionId() {
+        let sessionId = localStorage.getItem('chat_browser_session_id');
+        if (!sessionId) {
+            sessionId = 'browser_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('chat_browser_session_id', sessionId);
+        }
+        console.log('[chat_widget] getBrowserSessionId:', sessionId);
+        return sessionId;
+    }
+
+    function setBrowserSessionIdInput() {
+        const input = document.getElementById('browserSessionId');
+        if (input) {
+            input.value = getBrowserSessionId();
+            console.log('[chat_widget] Set browserSessionId input value:', input.value);
+        } else {
+            console.log('[chat_widget] browserSessionId input not found');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[chat_widget] DOMContentLoaded');
+        setBrowserSessionIdInput();
+    });
+
+    // Set it after any HTMX swap (e.g., after form is loaded/swapped in)
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        console.log('[chat_widget] htmx:afterSwap');
+        setBrowserSessionIdInput();
+    });
+
+    // Set it right before the form is submitted via HTMX
+    document.querySelector('form').addEventListener('htmx:configRequest', function(evt) {
+        setBrowserSessionIdInput();
+        console.log('[chat_widget] htmx:configRequest - browserSessionId:', document.getElementById('browserSessionId').value);
+    });
+
+    // Set up SSE connection when we get a session ID
+    function setupSSE(sessionId) {
+        if (!sessionId) {
+            console.log('[chat_widget] setupSSE called with empty sessionId');
+            return;
+        }
+        const messagesDiv = document.getElementById('messages');
+        const sseUrl = `/platform_connections/chat/events/${sessionId}/`;
+        if (messagesDiv.getAttribute('hx-sse')) {
+            messagesDiv.removeAttribute('hx-sse');
+        }
+        messagesDiv.setAttribute('hx-sse', `connect:${sseUrl}`);
+        htmx.process(messagesDiv);
+        console.log('[chat_widget] setupSSE: connected to', sseUrl);
+    }
+
+    // Handle form submission response
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.target.id === 'messages') {
+            const sessionId = evt.detail.xhr.getResponseHeader('X-Session-ID');
+            console.log('[chat_widget] htmx:afterSwap (messages) - X-Session-ID:', sessionId);
+            if (sessionId) {
+                document.getElementById('chatSessionId').value = sessionId;
+                setupSSE(sessionId);
+            }
+        }
+    });
+
+    // Add SSE message debug log
+    document.body.addEventListener('htmx:sseMessage', function(evt) {
+        console.log('[chat_widget] SSE message received:', evt.detail.data);
+        // You can add code here to display the message if needed
+    });
+</script>
 
 <style>
     .chat-container {

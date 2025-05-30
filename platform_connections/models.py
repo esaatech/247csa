@@ -63,6 +63,7 @@ class WebsiteChatConnection(BasePlatformConnection):
     iframe_token = models.CharField(max_length=100)
     theme = models.CharField(max_length=50, default='dark')
     allowed_domains = models.JSONField(default=list)
+    session_tracking = models.JSONField(default=dict)  # Store browser session IDs and their chat sessions
 
     class Meta:
         # Remove any unique constraints
@@ -97,3 +98,28 @@ class PlatformConnection(models.Model):
 
     def __str__(self):
         return f"{self.get_platform_type_display()} connection for {self.connected_object}"
+
+class ChatSession(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent_id = models.UUIDField()  # CSA agent
+    platform_type = models.CharField(max_length=50)  # e.g., 'website', 'sms', 'email'
+    user_identifier = models.CharField(max_length=255, blank=True, null=True)  # phone, email, or session id
+    started_at = models.DateTimeField(auto_now_add=True)
+    last_activity_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.platform_type} chat with {self.user_identifier or 'anonymous'}"
+
+class Message(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name='messages')
+    content = models.TextField()
+    is_from_user = models.BooleanField(default=True)  # True if from user, False if from agent
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['created_at']
+        
+    def __str__(self):
+        return f"{'User' if self.is_from_user else 'Agent'} message in {self.session}"

@@ -1,0 +1,42 @@
+.dot-flashing {
+  position: relative;
+  width: 1em;
+  height: 1em;
+}
+.dot-flashing::before, .dot-flashing::after, .dot-flashing {
+  content: '';
+  display: inline-block;
+  width: 0.3em;
+  height: 0.3em;
+  border-radius: 50%;
+  background: #888;
+  animation: dotFlashing 1s infinite linear alternate;
+}
+.dot-flashing::before {
+  animation-delay: 0s;
+}
+.dot-flashing {
+  animation-delay: 0.2s;
+}
+.dot-flashing::after {
+  animation-delay: 0.4s;
+}
+@keyframes dotFlashing {
+  0% { opacity: 0.2; }
+  50%, 100% { opacity: 1; }
+}
+
+/* Message bubble spacing */
+#chatMessages > div {
+  margin-bottom: 0.5rem;
+}
+
+#chatMessages > div:last-child {
+  margin-bottom: 0;
+}
+
+/* Ensure waiting bubble appears immediately after user message */
+#waiting-bubble {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
