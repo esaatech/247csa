@@ -427,7 +427,7 @@ def get_messages(request, connection_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 def chat_session_list(request, agent_id):
-    chat_sessions = ChatSession.objects.filter(agent_id=agent_id).order_by('-last_activity_at')
+    chat_sessions = ChatSession.objects.filter(agent_id=agent_id).order_by('-is_active', '-last_activity_at')
     return render(request, 'platform_connections/chat_session_list.html', {
         'chat_sessions': chat_sessions,
         'agent_id': agent_id
@@ -538,6 +538,15 @@ def end_chat_session(request, session_id):
         chat_session.save()
         # Notify both agent and user via WebSocket
         notify_session_ended(session_id)
+        # Also notify agent dashboard to refresh session list
+        notify_agent_dashboard({
+            'event': 'session_update',
+            'session_id': str(chat_session.id),
+            'user_identifier': chat_session.user_identifier,
+            'platform_type': chat_session.platform_type,
+            'is_active': chat_session.is_active,
+            'last_activity_at': chat_session.last_activity_at.isoformat(),
+        })
         return JsonResponse({'success': True})
     except ChatSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)

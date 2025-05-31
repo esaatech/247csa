@@ -30,6 +30,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         is_user = text_data_json.get('is_user', True)
 
+        # Check if session is active before processing
+        chat_session = await sync_to_async(ChatSession.objects.get)(id=self.session_id)
+        if not chat_session.is_active:
+            # Send session_ended event and do not process the message
+            await self.send(text_data=json.dumps({
+                'event': 'session_ended',
+                'message': 'This chat session has ended. Please start a new chat.'
+            }))
+            return
+
         # Save message to database
         await self.save_message(message, is_user)
 

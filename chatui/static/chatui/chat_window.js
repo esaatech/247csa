@@ -12,6 +12,10 @@ function openAgentWebSocket(sessionId) {
 
     socket.onmessage = function(e) {
         const data = JSON.parse(e.data);
+        if (data.event === 'session_ended') {
+            handleSessionEnded(data.message);
+            return;
+        }
         addMessageToChat(data.message, data.is_user);
     };
 
@@ -137,4 +141,24 @@ function escapeHtml(text) {
     var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function handleSessionEnded(message) {
+    // Disable input and send button
+    const input = document.getElementById('chatInput');
+    const sendBtn = document.querySelector('#chatInputForm button[type="submit"]');
+    if (input) input.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+    // Disable End Chat button
+    const endBtn = document.getElementById('endChatBtn');
+    if (endBtn) {
+        endBtn.disabled = true;
+        endBtn.style.opacity = 0.5;
+        endBtn.style.cursor = 'not-allowed';
+    }
+    // Show ended message
+    addMessageToChat(message || 'This chat has ended.', false);
+    // Close the WebSocket connection
+    if (socket) socket.close();
+    // Do NOT add a 'Start New Chat' button in the agent UI
 }

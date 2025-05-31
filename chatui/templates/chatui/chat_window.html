@@ -14,6 +14,7 @@
             class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded ml-4"
             title="End Chat"
             type="button"
+            {% if not chat_session.is_active %}disabled style="opacity:0.5;cursor:not-allowed;"{% endif %}
         >
             End Chat
         </button>
@@ -26,6 +27,9 @@
         {% empty %}
             <div class="text-gray-400 text-center py-8">No messages yet.</div>
         {% endfor %}
+        {% if not chat_session.is_active %}
+            <div class="text-red-600 text-center py-4 font-semibold">This chat has ended.</div>
+        {% endif %}
     </div>
 
     <!-- Input Area -->
@@ -37,6 +41,7 @@
             class="flex-1 p-2 border rounded"
             placeholder="Type your message..."
             autocomplete="off"
+            {% if not chat_session.is_active %}disabled{% endif %}
         >
         <label class="flex items-center cursor-pointer bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded">
             <input type="file" name="file" class="hidden" id="fileInput">
@@ -46,6 +51,7 @@
         </label>
         <button
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            {% if not chat_session.is_active %}disabled style="opacity:0.5;cursor:not-allowed;"{% endif %}
         >Send</button>
     </form>
 </div>

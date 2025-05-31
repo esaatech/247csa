@@ -17,8 +17,8 @@
             );
             dashboardSocket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
-                if (data.event === 'new_session') {
-                    // Trigger an HTMX refresh of the session list
+                // Refresh session list on any session update event
+                if (data.event === 'new_session' || data.event === 'session_update') {
                     htmx.ajax('GET', '{% url "platform_connections:chat_session_list" csa.id %}', '#sessionList');
                 }
             };

@@ -113,6 +113,30 @@
         });
     }
 
+    // Helper to disable chat input and show ended message
+    function handleSessionEnded(message) {
+        // Disable input and send button
+        const input = document.querySelector('input[name="message"]');
+        const sendBtn = document.querySelector('form button[type="submit"]');
+        if (input) input.disabled = true;
+        if (sendBtn) sendBtn.disabled = true;
+        // Show ended message
+        addMessageToChat(message || 'This chat has ended.', false);
+        // Close the WebSocket connection
+        if (socket) socket.close();
+        // Show 'Start New Chat' button if not already present
+        if (!document.getElementById('startNewChatBtn')) {
+            const form = document.querySelector('form');
+            const btn = document.createElement('button');
+            btn.id = 'startNewChatBtn';
+            btn.className = 'bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4';
+            btn.textContent = 'Start New Chat';
+            btn.type = 'button';
+            btn.onclick = function() { window.location.reload(); };
+            form.parentNode.appendChild(btn);
+        }
+    }
+
     function openWebSocketWithSessionId(sessionId) {
         const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
         socket = new WebSocket(`${ws_scheme}://${window.location.host}/ws/chat/${sessionId}/`);
@@ -124,17 +148,16 @@
         socket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             console.log('[WebSocket] message received:', data);
+            // Handle session ended event
+            if (data.event === 'session_ended') {
+                handleSessionEnded(data.message);
+                return;
+            }
             addMessageToChat(data.message, data.is_user);
         };
 
         socket.onclose = function() {
             console.log('[WebSocket] Disconnected');
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-                if (document.getElementById('chatSessionId').value) {
-                    openWebSocketWithSessionId(document.getElementById('chatSessionId').value);
-                }
-            }, 5000);
         };
     }
 
