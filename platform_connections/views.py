@@ -551,5 +551,23 @@ def end_chat_session(request, session_id):
     except ChatSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
 
+@require_POST
+def delete_chat_session(request, session_id):
+    try:
+        chat_session = ChatSession.objects.get(id=session_id)
+        # Delete all messages for this session
+        Message.objects.filter(session=chat_session).delete()
+        # Delete the session itself
+        chat_session.delete()
+        # Notify agent dashboard to refresh session list
+        notify_agent_dashboard({
+            'event': 'session_update',
+            'session_id': str(session_id),
+            'deleted': True
+        })
+        return JsonResponse({'success': True})
+    except ChatSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
+
 
 

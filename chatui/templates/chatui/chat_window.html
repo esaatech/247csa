@@ -14,10 +14,21 @@
             class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded ml-4"
             title="End Chat"
             type="button"
-            {% if not chat_session.is_active %}disabled style="opacity:0.5;cursor:not-allowed;"{% endif %}
+            {% if not chat_session.is_active %}style="display:none;"{% endif %}
         >
             End Chat
         </button>
+        {% if not chat_session.is_active %}
+        <button
+            id="deleteChatBtn"
+            class="bg-gray-700 hover:bg-red-700 text-white px-3 py-1 rounded ml-4"
+            title="Delete Chat"
+            type="button"
+            onclick="deleteChatSession('{{ chat_session.id }}')"
+        >
+            Delete
+        </button>
+        {% endif %}
     </div>
 
     <!-- Messages Area -->

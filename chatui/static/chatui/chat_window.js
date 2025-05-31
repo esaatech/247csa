@@ -112,11 +112,33 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded event fired!');
     initializeChatWindow();
 
+    // Auto-load the first session on initial page load
+    const firstSession = document.querySelector('#sessionList .session-item');
+    if (firstSession) {
+        firstSession.click();
+    } else {
+        const chatArea = document.getElementById('chatArea');
+        if (chatArea) chatArea.innerHTML = '<div class="text-gray-400 text-center py-8">No session selected.</div>';
+    }
+
     // Attach after HTMX swaps in new content
     document.body.addEventListener('htmx:afterSwap', function(evt) {
         // Only attach if the chat window was swapped in
         if (evt.target && evt.target.id === 'chatArea') {
             initializeChatWindow();
+        }
+        // If the session list was swapped in, auto-load the first session
+        if (evt.target && evt.target.id === 'sessionList') {
+            setTimeout(function() {
+                const firstSession = document.querySelector('#sessionList .session-item');
+                if (firstSession) {
+                    firstSession.click();
+                } else {
+                    // No sessions left, clear chat window
+                    const chatArea = document.getElementById('chatArea');
+                    if (chatArea) chatArea.innerHTML = '<div class="text-gray-400 text-center py-8">No session selected.</div>';
+                }
+            }, 50); // 50ms delay, adjust as needed
         }
     });
 });
@@ -161,4 +183,26 @@ function handleSessionEnded(message) {
     // Close the WebSocket connection
     if (socket) socket.close();
     // Do NOT add a 'Start New Chat' button in the agent UI
+}
+
+function deleteChatSession(sessionId) {
+    if (!confirm('Are you sure you want to delete this chat session? This cannot be undone.')) {
+        return;
+    }
+    fetch(`/platform_connections/delete_chat_session/${sessionId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Chat session deleted.');
+            // The rest is handled by the WebSocket/HTMX logic
+        } else {
+            alert('Failed to delete chat: ' + (data.error || 'Unknown error'));
+        }
+    });
 }

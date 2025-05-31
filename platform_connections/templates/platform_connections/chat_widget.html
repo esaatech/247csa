@@ -132,7 +132,7 @@
             btn.className = 'bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4';
             btn.textContent = 'Start New Chat';
             btn.type = 'button';
-            btn.onclick = function() { window.location.reload(); };
+            btn.onclick = function() { startNewChat(); };
             form.parentNode.appendChild(btn);
         }
     }
@@ -185,6 +185,29 @@
             console.log('[chat_widget] WebSocket not open, message not sent.');
         }
     });
+
+    function startNewChat() {
+        // Generate a new session ID
+        const newSessionId = 'browser_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('chat_browser_session_id', newSessionId);
+
+        // Clear chat messages
+        const messagesDiv = document.getElementById('messages');
+        if (messagesDiv) messagesDiv.innerHTML = '';
+
+        // Enable input and send button
+        const input = document.querySelector('input[name="message"]');
+        const sendBtn = document.querySelector('form button[type="submit"]');
+        if (input) input.disabled = false;
+        if (sendBtn) sendBtn.disabled = false;
+
+        // Remove the 'Start New Chat' button
+        const btn = document.getElementById('startNewChatBtn');
+        if (btn) btn.remove();
+
+        // Re-initialize the chat session and WebSocket
+        initChatSessionAndSocket();
+    }
 </script>
 
 <style>

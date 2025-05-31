@@ -22,4 +22,5 @@ urlpatterns = [
     path('widget/chat/<int:website_id>/<str:token>/', views.chat_widget, name='chat_widget'),
     path('chat/events/<uuid:session_id>/', views.chat_events, name='chat_events'),
     path('end_chat_session/<uuid:session_id>/', views.end_chat_session, name='end_chat_session'),
+    path('delete_chat_session/<uuid:session_id>/', views.delete_chat_session, name='delete_chat_session'),
 ]
