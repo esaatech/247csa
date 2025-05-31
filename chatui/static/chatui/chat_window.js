@@ -1,8 +1,13 @@
 console.log('Chat window script loaded!');
 
 let socket = null;
+let chatFormHandler = null;
 
 function openAgentWebSocket(sessionId) {
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
     const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
     socket = new WebSocket(`${ws_scheme}://${window.location.host}/ws/chat/${sessionId}/`);
 
@@ -52,7 +57,10 @@ function attachChatFormHandler() {
     const fileInput = document.getElementById('fileInput');
     const sessionId = form.getAttribute('data-session-id');
 
-    form.addEventListener('submit', function(e) {
+    if (chatFormHandler) {
+        form.removeEventListener('submit', chatFormHandler);
+    }
+    chatFormHandler = function(e) {
         e.preventDefault();
         const message = input.value.trim();
         // For now, ignore file sending in WebSocket version
@@ -69,7 +77,8 @@ function attachChatFormHandler() {
         } else {
             console.error('[Agent WebSocket] Not open, message not sent.');
         }
-    });
+    };
+    form.addEventListener('submit', chatFormHandler);
 }
 
 // Attach on initial load and after HTMX swaps
@@ -112,36 +121,52 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded event fired!');
     initializeChatWindow();
 
-    // Auto-load the first session on initial page load
+    // Highlight and auto-load the first session on initial page load
+    highlightAndClickFirstSession();
+
+    // Attach after HTMX swaps in new content
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.target && evt.target.id === 'chatArea') {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+            initializeChatWindow();
+        }
+        // If the session list was swapped in, auto-load and highlight the first session
+        if (evt.target && evt.target.id === 'sessionList') {
+            setTimeout(function() {
+                highlightAndClickFirstSession();
+            }, 50); // 50ms delay, adjust as needed
+        }
+    });
+
+    // Attach click handler to session items (delegated)
+    document.body.addEventListener('click', function(evt) {
+        const item = evt.target.closest('#sessionList .session-item');
+        if (item) {
+            highlightSelectedSession(item);
+        }
+    });
+});
+
+function highlightAndClickFirstSession() {
     const firstSession = document.querySelector('#sessionList .session-item');
     if (firstSession) {
+        highlightSelectedSession(firstSession);
         firstSession.click();
     } else {
         const chatArea = document.getElementById('chatArea');
         if (chatArea) chatArea.innerHTML = '<div class="text-gray-400 text-center py-8">No session selected.</div>';
     }
+}
 
-    // Attach after HTMX swaps in new content
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        // Only attach if the chat window was swapped in
-        if (evt.target && evt.target.id === 'chatArea') {
-            initializeChatWindow();
-        }
-        // If the session list was swapped in, auto-load the first session
-        if (evt.target && evt.target.id === 'sessionList') {
-            setTimeout(function() {
-                const firstSession = document.querySelector('#sessionList .session-item');
-                if (firstSession) {
-                    firstSession.click();
-                } else {
-                    // No sessions left, clear chat window
-                    const chatArea = document.getElementById('chatArea');
-                    if (chatArea) chatArea.innerHTML = '<div class="text-gray-400 text-center py-8">No session selected.</div>';
-                }
-            }, 50); // 50ms delay, adjust as needed
-        }
+function highlightSelectedSession(item) {
+    document.querySelectorAll('#sessionList .session-item').forEach(el => {
+        el.classList.remove('session-selected', 'bg-blue-100');
     });
-});
+    item.classList.add('session-selected', 'bg-blue-100');
+}
 
 // Helper to get CSRF token from cookies
 function getCookie(name) {
