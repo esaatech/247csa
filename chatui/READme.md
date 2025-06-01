@@ -24,3 +24,38 @@ Both agent and user see new messages appear in real time, with no need to refres
 Messages are only added to the chat window when received from the server, ensuring all clients stay in sync and no duplicates appear.
 6. Session Persistence
 All messages are stored in the database and can be reloaded if the agent or user refreshes or reopens the chat.
+
+
+
+Session Highlight Feature Documentation
+Purpose
+The session highlight feature visually indicates which chat session is currently selected in the agent dashboard’s session list. This improves usability by making it clear to the agent which conversation is in focus, mirroring the behavior of the CSA highlight in the main dashboard.
+
+
+How It Works
+Auto-Highlight on Load
+When the dashboard loads or the session list is refreshed (e.g., via HTMX), the first session in the list is automatically highlighted and selected.
+Highlight on Click
+When an agent clicks on any session in the list, that session is highlighted, and the highlight is removed from all others.
+Consistent Visual Feedback
+The highlight uses the CSS classes session-selected and bg-blue-100 for a clear, consistent look.
+
+
+You can further customize this in chatui/static/chatui/css/chat_window.css.
+JavaScript
+The logic is implemented in chatui/static/chatui/chat_window.js.
+Key functions:
+highlightAndClickFirstSession(): Highlights and clicks the first session in the list.
+highlightSelectedSession(item): Adds highlight classes to the selected session and removes them from others.
+Event listeners:
+On page load and after HTMX swaps, the first session is auto-highlighted and selected.
+On click, the clicked session is highlighted.
+HTML Structure
+Each session item in the list has the class session-item and is contained within an element with the ID sessionList.
+
+
+HTML Structure
+Each session item in the list has the class session-item and is contained within an element with the ID sessionList.
+How to Use
+No manual action is needed—the highlight is managed automatically.
+If you want to change the highlight color or style, edit the .session-selected class in your CSS.

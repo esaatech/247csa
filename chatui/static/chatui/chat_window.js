@@ -231,3 +231,22 @@ function deleteChatSession(sessionId) {
         }
     });
 }
+
+function toggleSessionMode(sessionId, mode) {
+    fetch(`/platform_connections/set_handling_mode/${sessionId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mode: mode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Failed to switch mode: ' + (data.error || 'Unknown error'));
+            // Optionally revert the radio selection if failed
+        }
+    });
+}

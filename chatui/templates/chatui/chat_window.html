@@ -8,27 +8,67 @@
             <span class="ml-2 text-xs bg-gray-100 text-blue-700 px-2 py-1 rounded">
                 {{ chat_session.platform_type|title }}
             </span>
+           
+            
         </div>
-        <button
-            id="endChatBtn"
-            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded ml-4"
-            title="End Chat"
-            type="button"
-            {% if not chat_session.is_active %}style="display:none;"{% endif %}
-        >
-            End Chat
-        </button>
-        {% if not chat_session.is_active %}
-        <button
-            id="deleteChatBtn"
-            class="bg-gray-700 hover:bg-red-700 text-white px-3 py-1 rounded ml-4"
-            title="Delete Chat"
-            type="button"
-            onclick="deleteChatSession('{{ chat_session.id }}')"
-        >
-            Delete
-        </button>
-        {% endif %}
+        <div class="flex items-center gap-2">
+            <!-- Session Mode Toggle Switch -->
+            <div class="inline-flex border-2 border-blue-600 rounded-lg bg-white overflow-hidden shadow-sm">
+                <label>
+                    <input
+                        type="radio"
+                        name="session_mode_{{ chat_session.id }}"
+                        value="ai"
+                        {% if chat_session.handling_mode == 'ai' %}checked{% endif %}
+                        onchange="toggleSessionMode('{{ chat_session.id }}', 'ai')"
+                        class="hidden peer"
+                    >
+                    <span class="px-4 py-2 cursor-pointer
+                        peer-checked:bg-green-500 peer-checked:text-white peer-checked:font-bold peer-checked:text-lg
+                        bg-white text-blue-600 transition">
+                        AI
+                    </span>
+                </label>
+                <label>
+                    <input
+                        type="radio"
+                        name="session_mode_{{ chat_session.id }}"
+                        value="human"
+                        {% if chat_session.handling_mode == 'human' %}checked{% endif %}
+                        onchange="toggleSessionMode('{{ chat_session.id }}', 'human')"
+                        class="hidden peer"
+                    >
+                    <span class="px-4 py-2 cursor-pointer
+                        peer-checked:bg-green-500 peer-checked:text-white peer-checked:font-bold peer-checked:text-lg
+                        bg-white text-blue-600 transition">
+                        Human
+                    </span>
+                </label>
+            </div>
+            <!-- End Chat/Delete Buttons (existing) -->
+            
+            
+            <button
+                id="endChatBtn"
+                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded ml-4"
+                title="End Chat"
+                type="button"
+                {% if not chat_session.is_active %}style="display:none;"{% endif %}
+            >
+                End Chat
+            </button>
+            {% if not chat_session.is_active %}
+            <button
+                id="deleteChatBtn"
+                class="bg-gray-700 hover:bg-red-700 text-white px-3 py-1 rounded ml-4"
+                title="Delete Chat"
+                type="button"
+                onclick="deleteChatSession('{{ chat_session.id }}')"
+            >
+                Delete
+            </button>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Messages Area -->

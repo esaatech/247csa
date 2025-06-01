@@ -22,6 +22,11 @@ class CSA(models.Model):
         choices=STATUS_CHOICES,
         default='draft'
     )
+    HANDLING_CHOICES = [
+        ('ai', 'AI'),
+        ('human', 'Human'),
+    ]
+    default_handling_mode = models.CharField(max_length=10, choices=HANDLING_CHOICES, default='ai')
     
 
     def __str__(self):

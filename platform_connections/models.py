@@ -107,6 +107,11 @@ class ChatSession(models.Model):
     started_at = models.DateTimeField(auto_now_add=True)
     last_activity_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    HANDLING_CHOICES = [
+        ('ai', 'AI'),
+        ('human', 'Human'),
+    ]
+    handling_mode = models.CharField(max_length=10, choices=HANDLING_CHOICES, default='ai')
 
     def __str__(self):
         return f"{self.platform_type} chat with {self.user_identifier or 'anonymous'}"

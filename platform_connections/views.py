@@ -428,6 +428,8 @@ def get_messages(request, connection_id):
 
 def chat_session_list(request, agent_id):
     chat_sessions = ChatSession.objects.filter(agent_id=agent_id).order_by('-is_active', '-last_activity_at')
+    for s in chat_sessions:
+        print(f"Session {s.id}: handling_mode={s.handling_mode}")
     return render(request, 'platform_connections/chat_session_list.html', {
         'chat_sessions': chat_sessions,
         'agent_id': agent_id
@@ -568,6 +570,30 @@ def delete_chat_session(request, session_id):
         return JsonResponse({'success': True})
     except ChatSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
+
+@csrf_exempt
+@require_POST
+def set_handling_mode(request, session_id):
+    try:
+        data = json.loads(request.body)
+        mode = data.get('mode')
+        if mode not in ['ai', 'human']:
+            return JsonResponse({'success': False, 'error': 'Invalid mode'}, status=400)
+        session = ChatSession.objects.get(id=session_id)
+        session.handling_mode = mode
+        session.save()
+        # Optionally, broadcast mode change to clients via WebSocket
+        notify_agent_dashboard({
+            'event': 'session_update',
+            'session_id': str(session.id),
+            'user_identifier': session.user_identifier,
+            'platform_type': session.platform_type,
+            'handling_mode': session.handling_mode,
+            'last_activity_at': session.last_activity_at.isoformat(),
+        })
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 
