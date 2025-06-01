@@ -4,6 +4,10 @@ from asgiref.sync import sync_to_async
 from .models import ChatSession, Message, WebsiteChatConnection
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import requests
+from django.conf import settings
+from urllib.parse import urljoin
+from ai.n8n import get_ai_response
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -30,28 +34,61 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         is_user = text_data_json.get('is_user', True)
 
-        # Check if session is active before processing
+        # 1. Immediately broadcast the user's message
+        await self.channel_layer.group_send(
+            
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': message,
+                'is_user': True
+            }
+        )
+
+        # 2. Now handle AI/human routing (which may broadcast an agent/AI reply)
+        await self.handle_message_with_ai_routing(message, is_user)
+
+    async def handle_message_with_ai_routing(self, message, is_user):
+        """
+        Handles incoming messages with AI/human routing:
+        - If session is in 'ai' mode, calls the AI app endpoint, saves AI response, and switches to human if needed.
+        - If session is in 'human' mode, just saves the message.
+        Broadcasts the appropriate response to the chat group.
+        """
         chat_session = await sync_to_async(ChatSession.objects.get)(id=self.session_id)
         if not chat_session.is_active:
-            # Send session_ended event and do not process the message
             await self.send(text_data=json.dumps({
                 'event': 'session_ended',
                 'message': 'This chat session has ended. Please start a new chat.'
             }))
             return
-
-        # Save message to database
-        await self.save_message(message, is_user)
-
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message,
-                'is_user': is_user
-            }
+        # Save the user's message
+        await sync_to_async(Message.objects.create)(
+            session=chat_session,
+            content=message,
+            is_from_user=True
         )
+        if chat_session.handling_mode == 'ai':
+            ai_reply, ai_button = await sync_to_async(get_ai_response)(message, str(chat_session.user_identifier))
+            # Save AI response as agent message
+            await sync_to_async(Message.objects.create)(
+                session=chat_session,
+                content=ai_reply,
+                is_from_user=False
+            )
+            # If button is yes, switch to human mode
+            if ai_button == 'yes':
+                chat_session.handling_mode = 'human'
+                await sync_to_async(chat_session.save)()
+            # Broadcast AI response as agent message
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': ai_reply,
+                    'is_user': False
+                }
+            )
 
     async def chat_message(self, event):
         message = event['message']
