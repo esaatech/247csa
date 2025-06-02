@@ -318,86 +318,9 @@ def chat_widget_container(request, website_id, token):
         print(f"Error in chat_widget_container: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
-@xframe_options_exempt
-@require_http_methods(["POST"])
-def send_message(request, connection_id):
-    """Handle incoming chat messages"""
-    print(f"Send message view called with connection_id: {connection_id}")
-    
-    try:
-        connection = get_object_or_404(WebsiteChatConnection, id=connection_id)
-        print(f"Found connection: {connection.id}")
-        
-        print(f"POST data: {request.POST}")
-        message = request.POST.get('message')
-        browser_session_id = request.POST.get('browser_session_id')
-        session_id = request.POST.get('session_id')
-        print(f"Received message from website chat: {message}")
-        print(f"Browser session ID: {browser_session_id}")
-        print(f"Session ID: {session_id}")
-        
-        if not message:
-            print("No message provided")
-            return JsonResponse({'error': 'Message is required'}, status=400)
-            
-        # Get or create chat session based on browser session
-        session_tracking = connection.session_tracking or {}
-        print(f"Session tracking: {session_tracking}")
-        chat_session_id = session_tracking.get(browser_session_id)
-        print(f"chat_session_id from tracking: {chat_session_id}")
-        
-        if chat_session_id:
-            try:
-                chat_session = ChatSession.objects.get(id=chat_session_id)
-                print(f"Found existing chat session: {chat_session.id}")
-            except ChatSession.DoesNotExist:
-                chat_session = None
-                print(f"Chat session {chat_session_id} not found")
-        else:
-            chat_session = None
-            print("No existing chat session found")
-            
-        if not chat_session:
-            # Create new session
-            chat_session = ChatSession.objects.create(
-                agent_id=connection.agent_id,
-                platform_type='website',
-                user_identifier=browser_session_id  # Use browser session ID as identifier
-            )
-            print(f"Created new chat session: {chat_session.id}")
-            
-            # Update session tracking
-            session_tracking[browser_session_id] = str(chat_session.id)
-            connection.session_tracking = session_tracking
-            connection.save()
-            print(f"Updated session tracking: {connection.session_tracking}")
-            
-        # Save the user's message
-        msg_obj = Message.objects.create(
-            session=chat_session,
-            content=message,
-            is_from_user=True
-        )
-        print(f"Saved message: {msg_obj.id}, content: {msg_obj.content}, is_from_user: {msg_obj.is_from_user}")
-        
-        # Return the user's message and session ID
-        response = render(request, 'platform_connections/message.html', {
-            'message': message,
-            'is_user': True
-        })
-        
-        # Add session ID to response headers
-        response['X-Session-ID'] = str(chat_session.id)
-        
-        # Add CORS headers
-        response["Access-Control-Allow-Origin"] = request.headers.get('Origin', '*')
-        response["Access-Control-Allow-Credentials"] = "true"
-        
-        return response
-        
-    except Exception as e:
-        print(f"Error in send_message: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+
+
+
 
 @xframe_options_exempt
 @require_http_methods(["GET"])
