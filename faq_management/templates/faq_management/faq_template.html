@@ -1,0 +1,52 @@
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">FAQ Management System Test</h1>
+
+    <!-- FAQ Form Section -->
+    <div class="space-y-4" id="faqSection">
+        <div class="flex items-center gap-2 mb-2">
+            <label class="font-bold">FAQ Entries</label>
+            <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Create interactive FAQ entries that can either provide direct answers or guide users through a series of sub-questions to find their solution')">
+                <i data-lucide="help-circle" class="h-4 w-4"></i>
+            </button>
+        </div>
+        
+        <form id="faqForm" class="space-y-4">
+            {% csrf_token %}
+            <div id="faqList" class="space-y-4"></div>
+            <button
+                type="button"
+                id="addFaq"
+                class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+            >
+                <i data-lucide="plus" class="h-4 w-4"></i>
+                Add FAQ Entry
+            </button>
+        </form>
+    </div>
+
+    <!-- Test Data Section -->
+    <div class="mt-12 p-6 bg-gray-50 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4">Test Data Information</h2>
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-medium">Content Type IDs:</h3>
+                <ul class="list-disc list-inside ml-4">
+                    <li>CSA Content Type ID: {{ csa_content_type.id }}</li>
+                    <li>User Content Type ID: {{ user_content_type.id }}</li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-medium">Object IDs:</h3>
+                <ul class="list-disc list-inside ml-4">
+                    <li>CSA ID: {{ csa.id }}</li>
+                    <li>User ID: {{ user.id }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

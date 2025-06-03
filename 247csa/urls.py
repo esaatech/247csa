@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/csa/', include('csa.urls', namespace='csa')),
     path('platform_connections/', include('platform_connections.urls', namespace='platform_connections')),
     path('chatui/', include('chatui.urls', namespace='chatui')),
+    path('faq/', include('faq_management.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

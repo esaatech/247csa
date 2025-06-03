@@ -61,6 +61,52 @@
 
     <!-- Initialize Lucide Icons -->
     <script>
+
+    // Simple custom tooltip implementation
+function showTooltip(element, message) {
+    // Remove any existing tooltip
+    document.querySelectorAll('.custom-tooltip').forEach(tip => tip.remove());
+
+    // Create tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'custom-tooltip';
+    tooltip.textContent = message;
+
+    // Basic styles (customize as needed)
+    Object.assign(tooltip.style, {
+        position: 'absolute',
+        background: '#222',
+        color: '#fff',
+        padding: '8px 12px',
+        borderRadius: '6px',
+        fontSize: '14px',
+        zIndex: 9999,
+        pointerEvents: 'none',
+        whiteSpace: 'pre-line',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+    });
+
+    // Position tooltip near the element
+    const rect = element.getBoundingClientRect();
+    tooltip.style.top = (window.scrollY + rect.bottom + 8) + 'px';
+    tooltip.style.left = (window.scrollX + rect.left) + 'px';
+
+    document.body.appendChild(tooltip);
+
+    // Remove tooltip on mouseout or click
+    function removeTooltip() {
+        tooltip.remove();
+        element.removeEventListener('mouseleave', removeTooltip);
+        element.removeEventListener('blur', removeTooltip);
+        element.removeEventListener('click', removeTooltip);
+    }
+    element.addEventListener('mouseleave', removeTooltip);
+    element.addEventListener('blur', removeTooltip);
+    element.addEventListener('click', removeTooltip);
+}
+
+
+
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
         });
@@ -68,6 +114,7 @@
 
     {% block js_scripts %}
     {% endblock %}
+        <script src="{% static 'faq_management/js/faq_manager.js' %}"></script>
 
     <!-- Additional Scripts -->
 </body>

@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'platform_connections',
     'chatui',
     'channels',
+    'faq_management',
 ]
 
 MIDDLEWARE = [

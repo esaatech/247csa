@@ -149,23 +149,12 @@
             <h2 class="text-2xl font-bold mb-6">Integrations & FAQ</h2>
             <div class="space-y-6 max-w-4xl">
                 <!-- FAQ Section -->
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <label class="font-bold">FAQ Entries</label>
-                        <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Create interactive FAQ entries that can either provide direct answers or guide users through a series of sub-questions to find their solution')">
-                            <i data-lucide="help-circle" class="h-4 w-4"></i>
-                        </button>
-                    </div>
-                    <div id="faqList" class="space-y-4"></div>
-                    <button
-                        type="button"
-                        id="addFaq"
-                        class="mt-2 flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
-                    >
-                        <i data-lucide="plus" class="h-4 w-4"></i>
-                        Add FAQ Entry
-                    </button>
-                </div>
+                <div
+                    id="faqSection"
+                    hx-trigger="load"
+                    hx-target="#faqSection"
+                    hx-swap="innerHTML"
+                ></div>
 
                 <!-- Channels 
                 <div>
