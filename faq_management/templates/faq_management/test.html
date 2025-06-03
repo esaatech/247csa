@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% load static %}
 
@@ -14,5 +13,17 @@
         hx-target="#faqSection"
         hx-swap="innerHTML"
     ></div>
+
+    <!-- FAQ List Section - Loaded via HTMX -->
+    <div
+        id="faqListSection"
+        hx-get="{% url 'faq_management:get_faqs_by_faqid' faqid='default' %}"
+        hx-trigger="load"
+        hx-target="#faqListSection"
+        hx-swap="innerHTML"
+    ></div>
+
+    <!-- Edit Form Container -->
+    <div id="editFormContainer"></div>
 </div>
 {% endblock %}

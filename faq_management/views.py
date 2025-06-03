@@ -6,6 +6,13 @@ from django.contrib.contenttypes.models import ContentType
 from .models import FAQ, FAQSubQuestion
 from csa.models import CSA
 import json
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+
+
+
+DEFAULT_FAQID = "default-app-faq"
 
 # Create your views here.
 
@@ -29,74 +36,73 @@ def faq_list(request, content_type_id, object_id):
         'object_id': object_id
     })
 
+
+
+
 @login_required
-@require_http_methods(['POST'])
-def save_faqs(request, content_type_id, object_id):
-    """Save or update FAQs for an object"""
-    content_type = get_object_or_404(ContentType, id=content_type_id)
-    model_class = content_type.model_class()
-    obj = get_object_or_404(model_class, id=object_id)
-    
+@require_POST
+@csrf_exempt
+def create_faq(request):
+    """Create a new FAQ for a given faqid (or default)."""
     try:
         data = json.loads(request.body)
         faqs_data = data.get('faqs', [])
+        faqid = data.get('faqid') or request.POST.get('faqid') or DEFAULT_FAQID
 
-        # Get existing FAQs
-        existing_faqs = {
-            str(faq.id): faq 
-            for faq in FAQ.objects.filter(
-                content_type=content_type,
-                object_id=object_id
-            )
-        }
         
+        # Save new FAQs
         for faq_data in faqs_data:
-            faq_id = faq_data.get('id')
-            
-            if faq_id and faq_id in existing_faqs:
-                # Update existing FAQ
-                faq = existing_faqs[faq_id]
-                faq.question = faq_data['question']
-                faq.response_type = faq_data['response_type']
-                faq.answer = faq_data.get('answer', '')
-                faq.save()
-                
-                # Handle sub-questions
-                if faq.response_type == 'subquestions':
-                    # Delete existing sub-questions
-                    faq.sub_questions.all().delete()
-                    
-                    # Create new sub-questions
-                    for i, sub_q in enumerate(faq_data.get('sub_questions', [])):
-                        FAQSubQuestion.objects.create(
-                            faq=faq,
-                            question=sub_q['question'],
-                            answer=sub_q['answer'],
-                            order=i
-                        )
-            else:
-                # Create new FAQ
-                faq = FAQ.objects.create(
-                    content_type=content_type,
-                    object_id=object_id,
-                    question=faq_data['question'],
-                    response_type=faq_data['response_type'],
-                    answer=faq_data.get('answer', '')
+            faq = FAQ.objects.create(
+                faqid=faqid,
+                question=faq_data['question'],
+                response_type=faq_data['response_type'],
+                answer=faq_data.get('answer', '')
+            )
+            # Save sub-questions if any
+            for i, sub_q in enumerate(faq_data.get('sub_questions', [])):
+                FAQSubQuestion.objects.create(
+                    faq=faq,
+                    question=sub_q['question'],
+                    answer=sub_q['answer'],
+                    order=i
                 )
-                
-                # Create sub-questions if needed
-                if faq.response_type == 'subquestions':
-                    for i, sub_q in enumerate(faq_data.get('sub_questions', [])):
-                        FAQSubQuestion.objects.create(
-                            faq=faq,
-                            question=sub_q['question'],
-                            answer=sub_q['answer'],
-                            order=i
-                        )
-
         return JsonResponse({'status': 'success'})
-    except json.JSONDecodeError:
-        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+
+
+@login_required
+@require_http_methods(['POST'])
+@csrf_exempt
+def save_faqs(request):
+    """update FAQs for a given using its id"""
+    try:
+        data = json.loads(request.body)
+        faqs_data = data.get('faqs', [])
+        faqid = data.get('faqid') or request.POST.get('faqid') or DEFAULT_FAQID
+
+        # Remove existing FAQs for this faqid
+        FAQ.objects.filter(faqid=faqid).delete()
+
+        # Save new FAQs
+        for faq_data in faqs_data:
+            faq = FAQ.objects.create(
+                faqid=faqid,
+                question=faq_data['question'],
+                response_type=faq_data['response_type'],
+                answer=faq_data.get('answer', '')
+            )
+            # Save sub-questions if any
+            for i, sub_q in enumerate(faq_data.get('sub_questions', [])):
+                FAQSubQuestion.objects.create(
+                    faq=faq,
+                    question=sub_q['question'],
+                    answer=sub_q['answer'],
+                    order=i
+                )
+        return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
@@ -147,3 +153,90 @@ def test_faq_system(request):
 def faq_template(request):
     """Render the FAQ template without requiring content type or object ID."""
     return render(request, 'faq_management/faq_template.html')
+
+@login_required
+@require_http_methods(['GET'])
+def list_faqs(request):
+    """Return a list of FAQs for a given faqid (or default)."""
+    faqid = request.GET.get('faqid') or DEFAULT_FAQID
+    faqs = FAQ.objects.filter(faqid=faqid, is_active=True).prefetch_related('sub_questions')
+    faqs_list = []
+    for faq in faqs:
+        faqs_list.append({
+            'id': faq.id,
+            'question': faq.question,
+            'response_type': faq.response_type,
+            'answer': faq.answer,
+            'sub_questions': [
+                {
+                    'id': sq.id,
+                    'question': sq.question,
+                    'answer': sq.answer,
+                    'order': sq.order
+                } for sq in faq.sub_questions.all()
+            ]
+        })
+    return JsonResponse({'faqs': faqs_list})
+
+@login_required
+def get_faqs_by_faqid(request, faqid):
+    """
+    Returns FAQs for a specific faqid in a format suitable for accordion display
+    """
+    try:
+        # Use DEFAULT_FAQID if faqid is 'default'
+        if faqid == 'default':
+            faqid = DEFAULT_FAQID
+
+        faqs = FAQ.objects.filter(
+            faqid=faqid,
+            is_active=True
+        ).prefetch_related('sub_questions').order_by('created_at')
+        
+        return render(request, 'faq_management/faqs.html', {
+            'faqs': faqs,
+            'faqid': faqid
+        })
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in get_faqs_by_faqid: {str(e)}")
+        return JsonResponse({
+            'error': 'An error occurred while fetching FAQs',
+            'details': str(e)
+        }, status=500)
+
+@login_required
+@require_http_methods(['POST'])
+def update_faq(request, faq_id):
+    """Update a single FAQ and its sub-questions"""
+    try:
+        faq = get_object_or_404(FAQ, id=faq_id)
+        data = json.loads(request.body)
+        
+        # Update FAQ
+        faq.question = data['question']
+        faq.response_type = data['response_type']
+        faq.answer = data.get('answer', '')
+        faq.save()
+        
+        # Update sub-questions if any
+        if data['response_type'] == 'subquestions':
+            # Remove existing sub-questions
+            faq.sub_questions.all().delete()
+            
+            # Add new sub-questions
+            for i, sub_q in enumerate(data.get('sub_questions', [])):
+                FAQSubQuestion.objects.create(
+                    faq=faq,
+                    question=sub_q['question'],
+                    answer=sub_q['answer'],
+                    order=i
+                )
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+

@@ -9,10 +9,8 @@ class FAQ(models.Model):
         ('subquestions', 'Sub-questions')
     ]
 
-    # Content type fields for flexible relationships
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.CharField(max_length=36)  # Changed to CharField to handle UUIDs
-    content_object = GenericForeignKey('content_type', 'object_id')
+    # Use faqid for grouping (application-level or per-group)
+    faqid = models.CharField(max_length=36, db_index=True)
 
     question = models.TextField()
     response_type = models.CharField(max_length=20, choices=RESPONSE_TYPES, default='answer')
@@ -27,7 +25,7 @@ class FAQ(models.Model):
         ordering = ['-created_at']
         # Add index for better query performance
         indexes = [
-            models.Index(fields=['content_type', 'object_id']),
+            models.Index(fields=['faqid']),
             models.Index(fields=['is_active']),
         ]
 

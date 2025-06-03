@@ -1,0 +1,328 @@
+{% load static %}
+
+<div class="faq-accordion-container">
+    {% if faqs %}
+        {% for faq in faqs %}
+        <div class="faq-item" data-faq-id="{{ faq.id }}">
+            <!-- Question Header (Always Visible) -->
+            <div class="faq-header" onclick="toggleFaq(this)">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium">{{ faq.question }}</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQ Content (Hidden by default) -->
+            <div class="faq-content hidden">
+                <form class="faq-edit-form" data-faq-id="{{ faq.id }}" data-update-url="{% url 'faq_management:update_faq' faq_id=faq.id %}">
+                    <div class="space-y-4 p-4">
+                        <!-- Question Input -->
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Question</label>
+                            <input 
+                                type="text" 
+                                name="question" 
+                                value="{{ faq.question }}"
+                                class="w-full p-2 border rounded-md"
+                                required
+                            >
+                        </div>
+
+                        <!-- Response Type -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium">Response Type</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2">
+                                    <input 
+                                        type="radio" 
+                                        name="response_type" 
+                                        value="answer" 
+                                        {% if faq.response_type == 'answer' %}checked{% endif %}
+                                    >
+                                    <span>Direct Answer</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input 
+                                        type="radio" 
+                                        name="response_type" 
+                                        value="subquestions" 
+                                        {% if faq.response_type == 'subquestions' %}checked{% endif %}
+                                    >
+                                    <span>Sub-questions</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Answer Section -->
+                        <div class="answer-section {% if faq.response_type == 'subquestions' %}hidden{% endif %}">
+                            <label class="block text-sm font-medium mb-1">Answer</label>
+                            <textarea 
+                                name="answer" 
+                                class="w-full p-2 border rounded-md"
+                                rows="3"
+                                required
+                            >{{ faq.answer }}</textarea>
+                        </div>
+
+                        <!-- Sub-questions Section -->
+                        <div class="sub-questions-section {% if faq.response_type == 'answer' %}hidden{% endif %}">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium">Sub-questions</label>
+                                <div class="sub-questions-list space-y-2">
+                                    {% for sub_q in faq.sub_questions.all %}
+                                    <div class="sub-question-item border rounded p-3">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h4 class="font-medium">Sub-question</h4>
+                                            <button 
+                                                type="button"
+                                                class="text-red-600 hover:text-red-800"
+                                                onclick="removeSubQuestion(this)"
+                                            >
+                                                <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                            </button>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <input 
+                                                type="text" 
+                                                name="sub_questions[{{ forloop.counter0 }}][question]" 
+                                                value="{{ sub_q.question }}"
+                                                class="w-full p-2 border rounded-md"
+                                                placeholder="Enter sub-question"
+                                                required
+                                            >
+                                            <textarea 
+                                                name="sub_questions[{{ forloop.counter0 }}][answer]" 
+                                                class="w-full p-2 border rounded-md"
+                                                rows="2"
+                                                placeholder="Enter answer"
+                                                required
+                                            >{{ sub_q.answer }}</textarea>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button 
+                                    type="button"
+                                    class="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
+                                    onclick="addSubQuestion(this)"
+                                >
+                                    <i data-lucide="plus" class="h-4 w-4"></i>
+                                    Add Sub-question
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Save Button -->
+                        <div class="flex justify-end mt-4">
+                            <button 
+                                type="button"
+                                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                onclick="saveFaq(this.closest('form'))"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center p-4 text-gray-500">
+            No FAQs found for this group.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleFaq(header) {
+    const content = header.nextElementSibling;
+    const icon = header.querySelector('.toggle-icon');
+    
+    // Close other FAQs
+    document.querySelectorAll('.faq-content:not(.hidden)').forEach(el => {
+        if (el !== content) {
+            el.classList.add('hidden');
+            el.previousElementSibling.querySelector('.toggle-icon').textContent = '▼';
+        }
+    });
+    
+    // Toggle current FAQ
+    content.classList.toggle('hidden');
+    icon.textContent = content.classList.contains('hidden') ? '▼' : '▲';
+}
+
+function toggleSubQuestion(header) {
+    const content = header.nextElementSibling;
+    const icon = header.querySelector('.toggle-icon');
+    
+    content.classList.toggle('hidden');
+    icon.textContent = content.classList.contains('hidden') ? '▼' : '▲';
+}
+
+function addSubQuestion(button) {
+    const subQuestionsList = button.previousElementSibling;
+    const subQuestionCount = subQuestionsList.children.length;
+    
+    const newSubQuestion = document.createElement('div');
+    newSubQuestion.className = 'sub-question-item border rounded p-3';
+    newSubQuestion.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+            <h4 class="font-medium">Sub-question</h4>
+            <button 
+                type="button"
+                class="text-red-600 hover:text-red-800"
+                onclick="removeSubQuestion(this)"
+            >
+                <i data-lucide="trash-2" class="h-4 w-4"></i>
+            </button>
+        </div>
+        <div class="space-y-2">
+            <input 
+                type="text" 
+                name="sub_questions[${subQuestionCount}][question]" 
+                class="w-full p-2 border rounded-md"
+                placeholder="Enter sub-question"
+                required
+            >
+            <textarea 
+                name="sub_questions[${subQuestionCount}][answer]" 
+                class="w-full p-2 border rounded-md"
+                rows="2"
+                placeholder="Enter answer"
+                required
+            ></textarea>
+        </div>
+    `;
+    
+    subQuestionsList.appendChild(newSubQuestion);
+    lucide.createIcons();
+}
+
+function removeSubQuestion(button) {
+    const subQuestionItem = button.closest('.sub-question-item');
+    subQuestionItem.remove();
+}
+
+function saveFaq(form) {
+    const formData = new FormData(form);
+    const data = {
+        question: formData.get('question'),
+        response_type: formData.get('response_type'),
+        answer: formData.get('answer'),
+        sub_questions: []
+    };
+
+    // Collect sub-questions
+    const subQuestionInputs = form.querySelectorAll('.sub-question-item');
+    subQuestionInputs.forEach((item, index) => {
+        const question = item.querySelector(`input[name="sub_questions[${index}][question]"]`).value;
+        const answer = item.querySelector(`textarea[name="sub_questions[${index}][answer]"]`).value;
+        if (question && answer) {
+            data.sub_questions.push({ question, answer });
+        }
+    });
+
+    // Send to server using the URL from the form's data attribute
+    fetch(form.dataset.updateUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            alert('FAQ updated successfully!');
+        } else {
+            alert('Failed to update FAQ: ' + (result.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Failed to update FAQ: ' + error.message);
+    });
+}
+
+// Handle response type toggle
+document.querySelectorAll('input[name="response_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const form = this.closest('form');
+        const answerSection = form.querySelector('.answer-section');
+        const subQuestionsSection = form.querySelector('.sub-questions-section');
+        
+        if (this.value === 'answer') {
+            answerSection.classList.remove('hidden');
+            subQuestionsSection.classList.add('hidden');
+        } else {
+            answerSection.classList.add('hidden');
+            subQuestionsSection.classList.remove('hidden');
+        }
+    });
+});
+
+// Initialize Lucide icons
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+</script>
+
+<style>
+.faq-accordion-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: white;
+}
+
+.faq-header {
+    padding: 1rem;
+    cursor: pointer;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.faq-header:hover {
+    background-color: #f3f4f6;
+}
+
+.faq-content {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.sub-question-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    margin: 0.5rem 0;
+}
+
+.sub-question-header {
+    padding: 0.75rem;
+    cursor: pointer;
+    background-color: #f9fafb;
+    border-radius: 0.375rem;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Animation classes */
+.faq-content {
+    transition: all 0.3s ease-in-out;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease-in-out;
+}
+</style> 

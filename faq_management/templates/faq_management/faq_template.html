@@ -13,8 +13,9 @@
             </button>
         </div>
         
-        <form id="faqForm" class="space-y-4">
+        <form id="faqForm" class="space-y-4" action="{% url 'faq_management:create_faq' %}">
             {% csrf_token %}
+            <input type="hidden" name="faqid" id="faqid" value="">
             <div id="faqList" class="space-y-4"></div>
             <button
                 type="button"
@@ -24,29 +25,21 @@
                 <i data-lucide="plus" class="h-4 w-4"></i>
                 Add FAQ Entry
             </button>
+            <button
+                type="button"
+                id="saveFaqs"
+                class="ml-4 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+                Save FAQs
+            </button>
         </form>
     </div>
 
-    <!-- Test Data Section -->
-    <div class="mt-12 p-6 bg-gray-50 rounded-lg">
-        <h2 class="text-2xl font-semibold mb-4">Test Data Information</h2>
-        <div class="space-y-4">
-            <div>
-                <h3 class="font-medium">Content Type IDs:</h3>
-                <ul class="list-disc list-inside ml-4">
-                    <li>CSA Content Type ID: {{ csa_content_type.id }}</li>
-                    <li>User Content Type ID: {{ user_content_type.id }}</li>
-                </ul>
-            </div>
-            <div>
-                <h3 class="font-medium">Object IDs:</h3>
-                <ul class="list-disc list-inside ml-4">
-                    <li>CSA ID: {{ csa.id }}</li>
-                    <li>User ID: {{ user.id }}</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/lucide@latest"></script>
 {% endblock %}
 
