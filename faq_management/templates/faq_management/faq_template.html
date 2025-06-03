@@ -2,20 +2,19 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">FAQ Management System Test</h1>
 
     <!-- FAQ Form Section -->
     <div class="space-y-4" id="faqSection">
         <div class="flex items-center gap-2 mb-2">
             <label class="font-bold">FAQ Entries</label>
-            <button class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Create interactive FAQ entries that can either provide direct answers or guide users through a series of sub-questions to find their solution')">
+            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="showTooltip(this, 'Create interactive FAQ entries that can either provide direct answers or guide users through a series of sub-questions to find their solution')">
                 <i data-lucide="help-circle" class="h-4 w-4"></i>
             </button>
         </div>
         
         <form id="faqForm" class="space-y-4" action="{% url 'faq_management:create_faq' %}">
             {% csrf_token %}
-            <input type="hidden" name="faqid" id="faqid" value="">
+            <input type="hidden" name="faqid" id="faqid" value="{{ faqid }}">
             <div id="faqList" class="space-y-4"></div>
             <button
                 type="button"

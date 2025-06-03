@@ -14,4 +14,5 @@ urlpatterns = [
     path('faq/group/<str:faqid>/', views.get_faqs_by_faqid, name='get_faqs_by_faqid'),
     path('faq/<int:faq_id>/update/', views.update_faq, name='update_faq'),
     path('faq/create/', views.create_faq, name='create_faq'),
+    path('faq/right-panel/', views.faq_template_right_panel, name='faq_template_right_panel'),
 ] 

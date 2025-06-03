@@ -1,0 +1,52 @@
+<!-- faq_management/templates/faq_management/faq_template_right_slide_container.html -->
+<div id="faqPanelWrapper" class="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+  <div class="p-4 border-b flex justify-between items-center flex-shrink-0">
+    <h2 class="text-lg font-semibold">Add FAQ</h2>
+    <button 
+      type="button"
+      onclick="closeFaqPanel()"
+      class="text-gray-600 hover:text-red-600 text-2xl leading-none"
+    >&times;</button>
+  </div>
+  <div class="p-4 flex-1 overflow-y-auto">
+    {% include 'faq_management/faq_template.html' %}
+  </div>
+</div>
+
+<script>
+function openFaqPanel() {
+    document.getElementById('faqPanelWrapper').classList.remove('translate-x-full');
+    document.getElementById('faqPanelWrapper').classList.add('translate-x-0');
+}
+function closeFaqPanel() {
+    document.getElementById('faqPanelWrapper').classList.remove('translate-x-0');
+    document.getElementById('faqPanelWrapper').classList.add('translate-x-full');
+}
+// Automatically slide in the panel when loaded via HTMX
+(function() {
+    var panel = document.getElementById('faqPanelWrapper');
+    if (panel) {
+        panel.classList.remove('translate-x-full');
+        panel.classList.add('translate-x-0');
+    }
+})();
+</script>
+
+<style>
+/* If not using Tailwind, add these styles */
+.translate-x-full { transform: translateX(100%); }
+.translate-x-0 { transform: translateX(0); }
+.transition-transform { transition: transform 0.3s ease-in-out; }
+#faqPanelWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+#faqPanelWrapper .panel-header {
+  flex-shrink: 0;
+}
+#faqPanelWrapper .panel-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+</style>

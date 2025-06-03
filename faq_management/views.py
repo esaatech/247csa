@@ -48,6 +48,7 @@ def create_faq(request):
         data = json.loads(request.body)
         faqs_data = data.get('faqs', [])
         faqid = data.get('faqid') or request.POST.get('faqid') or DEFAULT_FAQID
+        print(f"faqid: {faqid}")
 
         
         # Save new FAQs
@@ -152,7 +153,9 @@ def test_faq_system(request):
 @login_required
 def faq_template(request):
     """Render the FAQ template without requiring content type or object ID."""
-    return render(request, 'faq_management/faq_template.html')
+    print(f"faqid in faq_template: {request.GET.get('faqid')}")
+    faqid = request.GET.get('faqid') or DEFAULT_FAQID
+    return render(request, 'faq_management/faq_template.html', {'faqid': faqid})
 
 @login_required
 @require_http_methods(['GET'])
@@ -239,4 +242,10 @@ def update_faq(request, faq_id):
             'status': 'error',
             'message': str(e)
         }, status=400)
+
+@login_required
+def faq_template_right_panel(request):
+    """Render the FAQ template inside a right-slide panel container."""
+    faqid = request.GET.get('faqid') or DEFAULT_FAQID
+    return render(request, 'faq_management/faq_template_right_slide_container.html', {'faqid': faqid})
 
