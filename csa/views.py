@@ -184,6 +184,10 @@ class CSAViewSet(viewsets.ModelViewSet):
             WebsiteChatConnection.objects.filter(agent_id=csa.id).delete()
             SMSConnection.objects.filter(agent_id=csa.id).delete()
             
+            # Delete FAQs from Django DB
+            from faq_management.models import FAQ
+            FAQ.objects.filter(faqid=str(csa.id)).delete()
+            
             # Delete Firebase data
             firebase_delete_agent(request.user, csa.id)
             

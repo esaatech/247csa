@@ -206,6 +206,12 @@ function removeSubQuestion(button) {
     subQuestionItem.remove();
 }
 
+function dispatchFaqUpdatedEvent(success) {
+    document.dispatchEvent(new CustomEvent('faq:updated', {
+        detail: { updated: !!success }
+    }));
+}
+
 function saveFaq(form) {
     const formData = new FormData(form);
     const data = {
@@ -238,12 +244,15 @@ function saveFaq(form) {
     .then(result => {
         if (result.status === 'success') {
             alert('FAQ updated successfully!');
+            dispatchFaqUpdatedEvent(true);
         } else {
             alert('Failed to update FAQ: ' + (result.message || 'Unknown error'));
+            dispatchFaqUpdatedEvent(false);
         }
     })
     .catch(error => {
         alert('Failed to update FAQ: ' + error.message);
+        dispatchFaqUpdatedEvent(false);
     });
 }
 

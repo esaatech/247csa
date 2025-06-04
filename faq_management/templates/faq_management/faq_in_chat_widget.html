@@ -1,0 +1,30 @@
+<!-- faq_management/templates/faq_management/faq_in_chat_widget.html -->
+<div class="faq-chat-widget-questions space-y-2">
+    {% if faqs %}
+        <div class="mb-2 font-semibold">Frequently Asked Questions:</div>
+        {% for faq in faqs %}
+            <button type="button"
+                    class="w-full text-left px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 transition"
+                    onclick="faqChatShowAnswer({{ faq.id }}, '{{ faq.question|escapejs }}', '{{ faq.answer|escapejs }}')">
+                {{ faq.question }}
+            </button>
+        {% endfor %}
+    {% else %}
+        <div class="text-gray-500">No FAQs available for this agent.</div>
+    {% endif %}
+</div>
+
+<script>
+function faqChatShowAnswer(faqId, question, answer) {
+    // This function should be implemented in the chat widget context
+    // For now, just log to console
+    console.log('FAQ clicked:', faqId, question, answer);
+    // Example: insert the answer into the chat area
+    if (typeof addMessageToChat === 'function') {
+        addMessageToChat(question, true); // Show question as user message
+        addMessageToChat(answer, false);  // Show answer as bot message
+    } else {
+        alert(answer);
+    }
+}
+</script> 

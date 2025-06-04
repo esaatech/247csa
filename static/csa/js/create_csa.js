@@ -651,7 +651,8 @@ document.addEventListener('faq:created', function(e) {
         if (btn) {
             btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
             btn.classList.add('bg-green-600', 'hover:bg-green-700');
-            btn.innerHTML = '<span class="mr-2">✔️</span>Connected to FAQ';
+            btn.innerHTML = '<span class="mr-2 text-white align-middle"><i data-lucide="check" class="inline h-5 w-5"></i></span>Connected to FAQ';
+            if (window.lucide) lucide.createIcons();
         }
     } else {
         console.log('FAQ creation failed.');

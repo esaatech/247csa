@@ -16,25 +16,7 @@ DEFAULT_FAQID = "default-app-faq"
 
 # Create your views here.
 
-@login_required
-def faq_list(request, content_type_id, object_id):
-    """Render the FAQ list for a specific object"""
-    content_type = get_object_or_404(ContentType, id=content_type_id)
-    model_class = content_type.model_class()
-    obj = get_object_or_404(model_class, id=object_id)
-    
-    faqs = FAQ.objects.filter(
-        content_type=content_type,
-        object_id=object_id,
-        is_active=True
-    ).prefetch_related('sub_questions')
-    
-    return render(request, 'faq_management/faq_list.html', {
-        'object': obj,
-        'faqs': faqs,
-        'content_type_id': content_type_id,
-        'object_id': object_id
-    })
+
 
 
 
@@ -245,7 +227,24 @@ def update_faq(request, faq_id):
 
 @login_required
 def faq_template_right_panel(request):
-    """Render the FAQ template inside a right-slide panel container."""
+    """Render the FAQ template inside a right-slide panel container. Show both create and list if FAQs exist, else just the create form."""
     faqid = request.GET.get('faqid') or DEFAULT_FAQID
-    return render(request, 'faq_management/faq_template_right_slide_container.html', {'faqid': faqid})
+    faqs = FAQ.objects.filter(faqid=faqid, is_active=True).prefetch_related('sub_questions').order_by('created_at')
+    if faqs.exists():
+        return render(request, 'faq_management/create_update_faqs.html', {
+            'faqid': faqid,
+            'faqs': faqs,
+        })
+    else:
+        return render(request, 'faq_management/faq_template_right_slide_container.html', {'faqid': faqid})
+
+
+def faq_in_chat_widget(request):
+    """Render a block of FAQ questions for use in a chat widget."""
+    faqid = request.GET.get('faqid') or DEFAULT_FAQID
+    faqs = FAQ.objects.filter(faqid=faqid, is_active=True).order_by('created_at')
+    return render(request, 'faq_management/faq_in_chat_widget.html', {
+        'faqs': faqs,
+        'faqid': faqid,
+    })
 

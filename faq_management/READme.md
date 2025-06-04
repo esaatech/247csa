@@ -99,7 +99,7 @@ Radio Change
     └── Show/hide sub-questions section
 
 
--------------------------------------------      FAQS FLOWCHAT    ------------------------------------
+--------------------------------- Updating the FAQS FLOWCHAT  faqs.html,   ------------------------------------
 
 
 +-----------------------------+
@@ -162,4 +162,17 @@ Radio Change
 | "FAQ updated successfully!" |
 | If error: show alert        |
 | "Failed to update FAQ: ..." |
++-------------+---------------+
+              |
+              v
 +-----------------------------+
+| JS dispatches 'faq:updated' |
+| event with {updated: true/false} |
+dispatchFaqUpdatedEvent()
++-----------------------------+
+
+
+------------adding faqto chat widget-----------
+chat_widget.html — chat UI, includes FAQ block via HTMX
+faq_in_chat_widget.html — renders FAQ buttons, handles click
+faq_in_chat_widget view in faq_management/views.py — serves FAQ block HTML

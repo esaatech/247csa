@@ -307,3 +307,55 @@ Backend (views.py):
 Calls notify_agent_dashboard() when a new session is created.
 Channels Consumer:
 Handles the agent_dashboard group and relays events to all connected dashboards.
+
+
+
+-----------------------------Adding faq to chat widget---------------------------------------------
+
+
++-------------------------------------------------------------+
+|                User opens chat widget                       |
+|      (platform_connections/templates/chat_widget.html)       |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|   HTMX loads FAQ block as first message in chat area        |
+|   (faqChatBlock div in chat_widget.html)                    |
+|   hx-get="/faq/chat-block/?faqid=..."                       |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|   Django view: faq_in_chat_widget                           |
+|   (faq_management/views.py)                                 |
+|   - Queries FAQ.objects.filter(faqid=...)                   |
+|   - Renders faq_in_chat_widget.html                         |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|   Template: faq_in_chat_widget.html                         |
+|   - Renders FAQ questions as buttons                        |
+|   - Each button: onclick="faqChatShowAnswer(...)"           |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|   User clicks a FAQ question button                         |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|   JS function faqChatShowAnswer(faqId, question, answer)    |
+|   (faq_in_chat_widget.html)                                 |
+|   - Calls addMessageToChat(question, true)   // user msg    |
+|   - Calls addMessageToChat(answer, false)    // bot msg     |
+|   (chat_widget.html JS)                                     |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|   Chat auto-scrolls to latest message                       |
+|   FAQ block scrolls up with chat history                    |
++-------------------------------------------------------------+
