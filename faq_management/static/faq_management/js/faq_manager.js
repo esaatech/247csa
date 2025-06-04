@@ -324,6 +324,12 @@ function initFaqForm() {
     initFaqHandlers();
 }
 
+function dispatchFaqCreatedEvent(success) {
+    document.dispatchEvent(new CustomEvent('faq:created', {
+        detail: { created: !!success }
+    }));
+}
+
 // Save button handler
 function handleFaqSave(form) {
     if (!validateFaqs()) return;
@@ -342,12 +348,15 @@ function handleFaqSave(form) {
     .then(result => {
         if (result.status === 'success') {
             alert('FAQs saved successfully!');
+            dispatchFaqCreatedEvent(true);
         } else {
             alert('Failed to save FAQs: ' + (result.message || 'Unknown error'));
+            dispatchFaqCreatedEvent(false);
         }
     })
     .catch(error => {
         alert('Failed to save FAQs: ' + error.message);
+        dispatchFaqCreatedEvent(false);
     });
 }
 

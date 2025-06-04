@@ -643,6 +643,21 @@ function getCrmConnection() {
     return {};
 }
 
+document.addEventListener('faq:created', function(e) {
+    console.log('faq:created event received:', e.detail);
+    if (e.detail.created) {
+        console.log('FAQ was created successfully!');
+        const btn = document.getElementById('loadFaqBtn');
+        if (btn) {
+            btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            btn.innerHTML = '<span class="mr-2">✔️</span>Connected to FAQ';
+        }
+    } else {
+        console.log('FAQ creation failed.');
+    }
+});
+
 
 
 
