@@ -25,5 +25,23 @@
 
     <!-- Edit Form Container -->
     <div id="editFormContainer"></div>
+
+   
+<!-- Website FAQs Section - Loaded via HTMX -->
+    <div class="my-8">
+        <div id="websiteFaqsSection"
+             hx-get="{% url 'faq_management:website_faqs' %}"
+             hx-trigger="load"
+             hx-target="#websiteFaqsSection"
+             hx-swap="innerHTML">
+        </div>
+    </div>
+
+    <!-- FAQ Section - Loaded via HTMX -->
+    
+
+
+
+
 </div>
 {% endblock %}

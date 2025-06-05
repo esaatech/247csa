@@ -1,0 +1,28 @@
+<!-- faq_management/templates/faq_management/website_faqs.html -->
+<div class="website-faqs-section max-w-2xl mx-auto my-8">
+    <h2 class="text-2xl font-bold mb-6">Website FAQs</h2>
+    {% if faqs %}
+        <div class="space-y-4">
+            {% for faq in faqs %}
+                <details class="border rounded-lg p-4 bg-white shadow">
+                    <summary class="font-semibold cursor-pointer text-lg">{{ faq.question }}</summary>
+                    <div class="mt-2 text-gray-700">
+                        {{ faq.answer }}
+                        {% if faq.response_type == 'subquestions' and faq.sub_questions.all %}
+                            <ul class="mt-2 list-disc list-inside">
+                                {% for sub in faq.sub_questions.all %}
+                                    <li>
+                                        <span class="font-medium">{{ sub.question }}</span><br>
+                                        <span class="text-gray-600">{{ sub.answer }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </details>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-gray-500">No FAQs available for this website.</div>
+    {% endif %}
+</div> 

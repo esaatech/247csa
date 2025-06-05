@@ -14,4 +14,5 @@ urlpatterns = [
     path('faq/create/', views.create_faq, name='create_faq'),
     path('faq/right-panel/', views.faq_template_right_panel, name='faq_template_right_panel'),
     path('faq/chat-block/', views.faq_in_chat_widget, name='faq_in_chat_widget'),
+    path('faq/website/', views.website_faqs, name='website_faqs'),
 ] 

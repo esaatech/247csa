@@ -190,6 +190,18 @@ def get_faqs_by_faqid(request, faqid):
             'details': str(e)
         }, status=500)
 
+
+def website_faqs(request):
+    """Render a read-only FAQ section for website display using """
+    faqid = DEFAULT_FAQID
+    faqs = FAQ.objects.filter(faqid=faqid, is_active=True).order_by('created_at')
+    return render(request, 'faq_management/website_faqs.html', {
+        'faqs': faqs,
+        'faqid': faqid,
+    })
+
+
+
 @login_required
 @require_http_methods(['POST'])
 def update_faq(request, faq_id):
@@ -247,4 +259,6 @@ def faq_in_chat_widget(request):
         'faqs': faqs,
         'faqid': faqid,
     })
+
+
 
