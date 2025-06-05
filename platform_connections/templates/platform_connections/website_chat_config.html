@@ -25,9 +25,58 @@
     {% endif %}
 
     <!-- Connect/Disconnect Buttons -->
-    <div class="website-chat-config space-y-2">
+    <div class="website-chat-config space-y-4">
         <input type="hidden" id="agentId" value="{{ chat_id.id }}">
         <input type="hidden" id="token" value="{{ token }}">
+        <input type="hidden" id="connectionId" value="{{ connection_id }}">
+        <input type="hidden" id="connectionToken" value="{{ token }}">
+        
+        <!-- Custom Icon Section -->
+        <div class="custom-icon-section space-y-4">
+            <label class="block text-sm font-medium text-gray-700">Chat Widget Icon</label>
+            
+            <!-- Current Icon Display -->
+            <div class="current-icon-display flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                {% if custom_icon %}
+                    <img src="{{ custom_icon.url }}" alt="Current chat icon" class="w-16 h-16 object-contain rounded-full border border-gray-200">
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600">Current icon</p>
+                        <button type="button" 
+                                onclick="document.getElementById('customIcon').click()" 
+                                class="mt-2 text-sm text-blue-600 hover:text-blue-800">
+                            Change icon
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600">No custom icon set</p>
+                        <button type="button" 
+                                onclick="document.getElementById('customIcon').click()" 
+                                class="mt-2 text-sm text-blue-600 hover:text-blue-800">
+                            Add icon
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Hidden File Input -->
+            <input type="file" 
+                   id="customIcon" 
+                   accept="image/*" 
+                   class="hidden"
+                   onchange="handleIconChange(this)">
+            
+            <button 
+                type="button" 
+                id="updateIconButton" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-2 hidden"
+                onclick="updateChatWidgetIcon()"
+            >
+                Update Icon
+            </button>
+            
+            <p class="text-xs text-gray-500">Upload a custom icon for your chat widget (recommended size: 56x56 pixels)</p>
+        </div>
         
         <!-- Connect Button -->
         <button 
@@ -49,5 +98,6 @@
             Disconnect
         </button>
     </div>
+
   </div>
 </div>

@@ -64,6 +64,7 @@ class WebsiteChatConnection(BasePlatformConnection):
     theme = models.CharField(max_length=50, default='dark')
     allowed_domains = models.JSONField(default=list)
     session_tracking = models.JSONField(default=dict)  # Store browser session IDs and their chat sessions
+    custom_icon = models.ImageField(upload_to='chat_widget_icons/', null=True, blank=True)  # Add this field for custom icons
 
     class Meta:
         # Remove any unique constraints

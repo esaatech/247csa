@@ -4,16 +4,20 @@ console.log("platforms.js loaded");
 async function connectWebsiteChat(agentId, token) {
     console.log("connectWebsiteChat called");
     try {
+        const customIcon = document.getElementById('customIcon')?.files[0];
+        const formData = new FormData();
+        formData.append('agent_id', agentId);
+        formData.append('token', token);
+        if (customIcon) {
+            formData.append('custom_icon', customIcon);
+        }
+
         const response = await fetch('/platform_connections/platforms-connect/website/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({
-                agent_id: agentId,
-                token: token
-            })
+            body: formData
         });
 
         const data = await response.json();
@@ -176,5 +180,81 @@ function copyIframeCode() {
     navigator.clipboard.writeText(code).then(function() {
         // Optionally, show a toast or alert
        // alert('Iframe code copied to clipboard!');
+    });
+}
+
+
+let selectedIconFile = null;
+function handleIconChange(input) {
+    if (input.files && input.files[0]) {
+        selectedIconFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Update the current icon display
+            const currentIconDisplay = document.querySelector('.current-icon-display');
+            if (currentIconDisplay) {
+                currentIconDisplay.innerHTML = `
+                    <img src="${e.target.result}" alt="Selected icon" class="w-16 h-16 object-contain rounded-full border border-gray-200">
+                    <div class=\"flex-1\">
+                        <p class=\"text-sm text-gray-600\">New icon selected</p>
+                        <button type=\"button\" 
+                                onclick=\"document.getElementById('customIcon').click()\" 
+                                class=\"mt-2 text-sm text-blue-600 hover:text-blue-800\">
+                            Change icon
+                        </button>
+                    </div>
+                `;
+            }
+            // Show the update icon button if connected
+            if (document.getElementById('disconnectButton') && !document.getElementById('disconnectButton').classList.contains('hidden')) {
+                document.getElementById('updateIconButton').classList.remove('hidden');
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function updateChatWidgetIcon() {
+    const websiteId = document.getElementById('connectionId').value;
+    const token = document.getElementById('connectionToken').value;
+    if (!selectedIconFile) {
+        alert('Please select an icon file first.');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('custom_icon', selectedIconFile);
+    fetch(`/platform_connections/widget/chat/${websiteId}/${token}/update_icon/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the icon preview
+            const currentIconDisplay = document.querySelector('.current-icon-display');
+            if (currentIconDisplay) {
+                currentIconDisplay.innerHTML = `
+                    <img src="${data.icon_url}" alt="Current chat icon" class="w-16 h-16 object-contain rounded-full border border-gray-200">
+                    <div class=\"flex-1\">
+                        <p class=\"text-sm text-gray-600\">Current icon</p>
+                        <button type=\"button\" 
+                                onclick=\"document.getElementById('customIcon').click()\" 
+                                class=\"mt-2 text-sm text-blue-600 hover:text-blue-800\">
+                            Change icon
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('updateIconButton').classList.add('hidden');
+            selectedIconFile = null;
+        } else {
+            alert('Error updating icon: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred while updating the icon.');
     });
 }

@@ -85,9 +85,13 @@
 <body style="background: transparent !important;">
     <!-- Floating Action Button -->
     <button class="chat-fab" id="chatFab" title="Chat with us" role="button" tabindex="0" aria-label="Open chat">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75V19.5A2.25 2.25 0 006.75 21.75h10.5A2.25 2.25 0 0019.5 19.5V9.75" />
-        </svg>
+        {% if connection.custom_icon %}
+            <img src="{{ connection.custom_icon.url }}" alt="Chat" class="w-8 h-8 object-contain">
+        {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75V19.5A2.25 2.25 0 006.75 21.75h10.5A2.25 2.25 0 0019.5 19.5V9.75" />
+            </svg>
+        {% endif %}
     </button>
 
     <!-- Chat Popup -->

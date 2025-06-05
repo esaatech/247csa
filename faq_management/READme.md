@@ -172,7 +172,64 @@ dispatchFaqUpdatedEvent()
 +-----------------------------+
 
 
-------------adding faqto chat widget-----------
+-----adding faqto chat widget-----------
 chat_widget.html — chat UI, includes FAQ block via HTMX
 faq_in_chat_widget.html — renders FAQ buttons, handles click
 faq_in_chat_widget view in faq_management/views.py — serves FAQ block HTML
+
+---------------------- Website FAQs Flowchart (website_faqs.html) ----------------------
+
++-------------------------------+
+|  Page loads or user navigates |
+|  to FAQ section               |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| HTMX triggers GET request to  |
+| /faq-management/faq/website/  |
+| (faq_management:website_faqs) |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| Django view: website_faqs     |
+| - Gets DEFAULT_FAQID          |
+| - Queries FAQ objects         |
+| - Renders website_faqs.html   |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| website_faqs.html template    |
+| - Loops over FAQs             |
+| - For each FAQ:               |
+|   - Renders <details><summary> |
+|   - Shows question in summary |
+|   - Shows answer in details   |
+|   - If subquestions:          |
+|     - Renders as <ul><li>     |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| User sees list of FAQs as     |
+| collapsible sections          |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| User clicks a question        |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| <details> expands, showing    |
+| answer and any sub-questions  |
++---------------+---------------+
+                |
+                v
++-------------------------------+
+| User can expand/collapse      |
+| multiple FAQs as needed       |
++-------------------------------+

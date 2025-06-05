@@ -52,11 +52,10 @@ def website_chat_config(request):
     
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            print("Received data:", data)
-            
-            agent_id = data.get('agent_id')
-            token = data.get('token')
+            # Handle form data instead of JSON
+            agent_id = request.POST.get('agent_id')
+            token = request.POST.get('token')
+            custom_icon = request.FILES.get('custom_icon')
 
             if not agent_id or not token:
                 return JsonResponse({
@@ -73,18 +72,21 @@ def website_chat_config(request):
                 
                 if connection:
                     print(f"Found existing connection: {connection.id}")
-                    # Only update is_connected status, keep the same token
+                    # Update connection
                     connection.is_connected = True
+                    if custom_icon:
+                        connection.custom_icon = custom_icon
                     connection.save()
-                    print(f"Updated connection {connection.id} to connected")
+                    print(f"Updated connection {connection.id}")
                 else:
-                    # Create new connection with the token
+                    # Create new connection
                     connection = WebsiteChatConnection.objects.create(
                         agent_id=agent_uuid,
                         iframe_token=token,
                         theme='dark',
                         allowed_domains=["example.com"],
-                        is_connected=True
+                        is_connected=True,
+                        custom_icon=custom_icon
                     )
                     print(f"Created new connection: {connection.id}")
 
@@ -101,13 +103,6 @@ def website_chat_config(request):
                     'error': 'Invalid agent ID format.'
                 }, status=400)
                 
-        except json.JSONDecodeError:
-            print("Invalid JSON data received")
-            return JsonResponse({
-                'success': False,
-                'error': 'Invalid JSON data'
-            }, status=400)
-            
         except Exception as e:
             print("Error in website_chat_config:", str(e))
             return JsonResponse({
@@ -117,22 +112,22 @@ def website_chat_config(request):
 
     else:
         # Handle GET request
-        agent_id = request.GET.get('agent_id') # get the agent_id if one exists
-        new_agent_id = request.GET.get('newagent_id') # get the new agent_id if one exists
-
+        agent_id = request.GET.get('agent_id')
+        new_agent_id = request.GET.get('newagent_id')
+        
         print(".............agent_id.................", agent_id)
         print(".............new_agent_id.................", new_agent_id)
         
         # Initialize default values
         token = token_urlsafe(32)
         is_connected = False
-        existing_connection = None  # Initialize existing_connection
+        existing_connection = None
         
         # Use new_agent_id if provided, otherwise use agent_id
         active_agent_id = new_agent_id if new_agent_id and new_agent_id != 'null' else agent_id
         
         # Check if connection exists and get its token
-        if active_agent_id and active_agent_id != 'null':  # Add check for 'null' string
+        if active_agent_id and active_agent_id != 'null':
             try:
                 agent_uuid = uuid.UUID(active_agent_id)
                 existing_connection = WebsiteChatConnection.objects.filter(agent_id=agent_uuid).first()
@@ -143,14 +138,14 @@ def website_chat_config(request):
                     
             except ValueError:
                 print(f"Invalid UUID format for agent_id: {active_agent_id}")
-                # Keep default values
 
         return render(request, 'platform_connections/website_chat_config.html', {
             'title': 'Connect to Website Chat',
             'chat_id': {'id': active_agent_id},
             'connection_id': existing_connection.id if existing_connection and is_connected else None,
             'token': token,
-            'is_connected': is_connected
+            'is_connected': is_connected,
+            'custom_icon': existing_connection.custom_icon if existing_connection else None
         })
 
 def sms_config(request):
@@ -317,10 +312,6 @@ def chat_widget_container(request, website_id, token):
     except Exception as e:
         print(f"Error in chat_widget_container: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
-
-
-
-
 
 @xframe_options_exempt
 @require_http_methods(["GET"])
@@ -515,6 +506,19 @@ def set_handling_mode(request, session_id):
             'last_activity_at': session.last_activity_at.isoformat(),
         })
         return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_http_methods(["POST"])
+def update_chat_widget_icon(request, website_id, token):
+    try:
+        connection = get_object_or_404(WebsiteChatConnection, id=website_id, iframe_token=token)
+        custom_icon = request.FILES.get('custom_icon')
+        if not custom_icon:
+            return JsonResponse({'success': False, 'error': 'No icon file provided.'}, status=400)
+        connection.custom_icon = custom_icon
+        connection.save()
+        return JsonResponse({'success': True, 'icon_url': connection.custom_icon.url})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 

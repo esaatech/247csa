@@ -19,6 +19,7 @@ urlpatterns = [
     path('widget/chat/<int:connection_id>/messages/', views.get_messages, name='get_messages'),
     path('widget/chat/<int:website_id>/<str:token>/container/', views.chat_widget_container, name='chat_widget_container'),
     path('widget/chat/<int:website_id>/<str:token>/', views.chat_widget, name='chat_widget'),
+    path('widget/chat/<int:website_id>/<str:token>/update_icon/', views.update_chat_widget_icon, name='update_chat_widget_icon'),
     path('chat/events/<uuid:session_id>/', views.chat_events, name='chat_events'),
     path('end_chat_session/<uuid:session_id>/', views.end_chat_session, name='end_chat_session'),
     path('delete_chat_session/<uuid:session_id>/', views.delete_chat_session, name='delete_chat_session'),
