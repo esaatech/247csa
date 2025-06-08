@@ -1,0 +1,87 @@
+{% if interactions %}
+<div class="space-y-4"
+     hx-get="{% url 'interaction:interactions_list' %}?activity_uuid={{ interactions.0.activity_uuid }}"
+     hx-trigger="interactionUpdated from:body"
+     hx-swap="outerHTML">
+    {% for interaction in interactions %}
+    <div class="border rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+         hx-get="{% url 'interaction:interaction_detail_slide_out' interaction.id %}"
+         hx-target="body"
+         hx-swap="beforeend"
+         hx-trigger="click">
+        <div class="p-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-medium text-gray-900">{{ interaction.get_type_display }}</h3>
+                    <p class="text-sm text-gray-600">via {{ interaction.get_medium_display }}</p>
+                </div>
+                <span class="text-xs text-gray-500">{{ interaction.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            <p class="mt-2 text-gray-700">{{ interaction.description }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-gray-500 py-4" id="interactionsList"
+     hx-get="{% url 'interaction:interactions_list' %}?activity_uuid={{ activity_uuid }}"
+     hx-trigger="interactionUpdated from:body"
+     hx-swap="outerHTML"
+     hx-target="#interactionsList">
+    No interactions found.
+</div>
+{% endif %}
+
+<script>
+document.querySelectorAll('.deleteInteractionBtn').forEach(btn => {
+    btn.onclick = async function() {
+        if (!confirm('Are you sure you want to delete this interaction?')) return;
+        
+        const interactionId = btn.getAttribute('data-interaction-id');
+        try {
+            const response = await fetch(`/interaction/api/delete_interaction/${interactionId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            const result = await response.json();
+            if (response.ok) {
+                document.body.dispatchEvent(new CustomEvent('interactionDeleted'));
+                btn.closest('.border').remove();
+                showToast('Interaction deleted successfully');
+            } else {
+                throw new Error(result.error || 'Failed to delete interaction');
+            }
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+});
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script> 

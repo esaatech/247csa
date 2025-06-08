@@ -1,0 +1,41 @@
+<div class="space-y-4">
+    {% for task in tasks %}
+    <div class="border rounded shadow-sm">
+        <button class="w-full text-left px-4 py-2 font-semibold bg-gray-100 hover:bg-gray-200 flex justify-between items-center task-dropdown-btn" data-task-id="{{ task.id }}">
+            <span>{{ task.title }}</span>
+            <span class="text-xs text-gray-500">{{ task.due_date|date:'Y-m-d H:i' }}</span>
+        </button>
+        <div class="hidden px-4 py-2 task-dropdown-content" id="task-content-{{ task.id }}">
+            <form class="editTaskForm" data-task-id="{{ task.id }}">
+                <input type="hidden" name="task_id" value="{{ task.id }}">
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Title</label>
+                    <input type="text" name="title" value="{{ task.title }}" class="w-full rounded border-gray-300">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description" class="w-full rounded border-gray-300">{{ task.description }}</textarea>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Due Date</label>
+                    <input type="text" name="due_date" value="{{ task.due_date|date:'Y-m-d H:i' }}" class="w-full rounded border-gray-300 due-date-edit">
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Priority</label>
+                    <select name="priority" class="w-full rounded border-gray-300">
+                        <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
+                        <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2 mt-2">
+                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded">Update</button>
+                    <button type="button" class="px-3 py-1 bg-red-600 text-white rounded deleteTaskBtn" data-task-id="{{ task.id }}">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-gray-500">No tasks found.</div>
+    {% endfor %}
+</div> 

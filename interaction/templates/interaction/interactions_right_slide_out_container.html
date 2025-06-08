@@ -1,0 +1,28 @@
+<div class="fixed inset-0 flex items-center justify-end z-50">
+    <div class="bg-white w-full max-w-md shadow-xl rounded-l-lg p-6 border-l border-t border-b border-gray-200 slide-out animate-slide-in-right">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Recent Interactions</h2>
+            <button onclick="closeSlideOut()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <div id="interactionsListContainer">
+            {% include "interaction/interactions.html" %}
+        </div>
+    </div>
+    <div class="fixed inset-0 bg-black opacity-30 -z-10" onclick="closeSlideOut()"></div>
+</div>
+
+<style>
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+</style>
+
+<script>
+function closeSlideOut() {
+    document.querySelector('.slide-out').parentElement.remove();
+}
+</script> 

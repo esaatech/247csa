@@ -1,0 +1,129 @@
+<div class="fixed inset-0 flex items-center justify-end z-50" id="interactionSlideOut">
+    <div class="bg-white w-full max-w-md shadow-xl rounded-l-lg p-6 border-l border-t border-b border-gray-200 slide-out animate-slide-in-right">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Interaction Details</h2>
+            <button onclick="closeInteractionSlideOut()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <form id="interactionDetailForm" 
+              class="space-y-4"
+              hx-put="{% url 'interaction:update_interaction_api' interaction.id %}"
+              hx-trigger="submit"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-swap="none">
+            <input type="hidden" name="activity_uuid" value="{{ activity_uuid }}">
+            
+            <div>
+                <label for="type" class="block text-sm font-medium text-gray-700">Type</label>
+                <select name="type" id="type" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    {% for value, label in interaction.INTERACTION_TYPES %}
+                    <option value="{{ value }}" {% if interaction.type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="medium" class="block text-sm font-medium text-gray-700">Medium</label>
+                <select name="medium" id="medium" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    {% for value, label in interaction.MEDIUM_CHOICES %}
+                    <option value="{{ value }}" {% if interaction.medium == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" id="description" rows="4" required
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ interaction.description }}</textarea>
+            </div>
+
+            <div class="flex justify-between items-center mt-4">
+                <div class="text-sm text-gray-500">
+                    Created: {{ interaction.created_at|date:"Y-m-d H:i" }}
+                    {% if interaction.updated_at != interaction.created_at %}
+                    <br>Updated: {{ interaction.updated_at|date:"Y-m-d H:i" }}
+                    {% endif %}
+                </div>
+                <div class="space-x-2">
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Save Changes
+                    </button>
+                    <button type="button"
+                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            hx-delete="{% url 'interaction:delete_interaction_api' interaction.id %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                            hx-confirm="Are you sure you want to delete this interaction?"
+                            hx-trigger="click"
+                            hx-on::after-request="if(event.detail.successful) { closeInteractionSlideOut(); document.body.dispatchEvent(new CustomEvent('interactionUpdated')); showToast('Interaction deleted successfully'); }">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="fixed inset-0 bg-black opacity-30 -z-10" onclick="closeInteractionSlideOut()"></div>
+</div>
+
+<style>
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in-right {
+    animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+</style>
+
+<script>
+function closeInteractionSlideOut() {
+    const slideOut = document.getElementById('interactionSlideOut');
+    if (slideOut) {
+        slideOut.remove();
+    }
+}
+
+// Handle form submission
+document.getElementById('interactionDetailForm').addEventListener('htmx:beforeRequest', function(evt) {
+    // Convert form data to JSON
+    const formData = new FormData(evt.detail.elt);
+    const data = {
+        type: formData.get('type'),
+        medium: formData.get('medium'),
+        description: formData.get('description'),
+        activity_uuid: formData.get('activity_uuid')
+    };
+    
+    // Set the request data
+    evt.detail.xhr.setRequestHeader('Content-Type', 'application/json');
+    evt.detail.xhr.send(JSON.stringify(data));
+    
+    // Prevent the default form submission
+    evt.preventDefault();
+});
+
+// Handle response
+document.getElementById('interactionDetailForm').addEventListener('htmx:afterRequest', function(evt) {
+    if (evt.detail.successful) {
+        // Refresh the interactions list
+        document.body.dispatchEvent(new CustomEvent('interactionUpdated'));
+        // Show success message
+        showToast('Interaction updated successfully');
+        // Close the slide-out
+        closeInteractionSlideOut();
+    } else {
+        showToast('Failed to update interaction', 'error');
+    }
+});
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script> 

@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     'chatui',
     'channels',
     'faq_management',
+    'mycrm',
+    'task',
+    'interaction',
 ]
 
 MIDDLEWARE = [

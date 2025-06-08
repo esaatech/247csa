@@ -16,4 +16,7 @@ urlpatterns = [
     path('platform_connections/', include('platform_connections.urls', namespace='platform_connections')),
     path('chatui/', include('chatui.urls', namespace='chatui')),
     path('faq/', include('faq_management.urls')),
+    path('mycrm/', include('mycrm.urls')),
+    path('task/', include('task.urls')),
+    path('interaction/', include('interaction.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

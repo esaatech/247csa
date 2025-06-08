@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-4">Task App Test Interface</h1>
+    <div class="flex space-x-4 mb-4">
+        <button id="openAddTask" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            hx-get="{% url 'task:add_task_slide_out' %}"
+            hx-target="body" hx-swap="beforeend">
+            Add Task (Slide Out)
+        </button>
+        <button id="openTasks" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            hx-get="{% url 'task:tasks_right_slide_out' %}"
+            hx-target="body" hx-swap="beforeend">
+            Tasks
+        </button>
+    </div>
+</div>
+
+{% endblock %} 
