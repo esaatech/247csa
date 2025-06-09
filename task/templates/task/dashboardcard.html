@@ -1,0 +1,146 @@
+{% load static %}
+
+<div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Tasks Overview</h3>
+            <div class="text-sm text-gray-500">
+                Total: {{ total_tasks }} | Due Today: {{ due_today }}
+            </div>
+        </div>
+
+        <!-- Scrollable container for all tasks -->
+        <div class="max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <!-- Tasks Due Today -->
+            {% if due_today_tasks %}
+            <div class="mb-6">
+                <div class="flex items-center mb-2">
+                    <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                    <h4 class="text-sm font-medium text-gray-700">Due Today</h4>
+                </div>
+                <div class="space-y-2">
+                    {% for task in due_today_tasks %}
+                    <a href="{% url 'mycrm:dashboard_with_customer' task.customer_id %}"
+                       class="block p-3 {% if task.priority == 'high' %}bg-red-100 hover:bg-red-200{% elif task.priority == 'medium' %}bg-yellow-100 hover:bg-yellow-200{% else %}bg-blue-100 hover:bg-blue-200{% endif %} rounded-lg transition-colors cursor-pointer">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-block w-2 h-2 {% if task.priority == 'high' %}bg-red-500{% elif task.priority == 'medium' %}bg-yellow-500{% else %}bg-blue-500{% endif %} rounded-full"></span>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Due: {{ task.due_date|date:"M d, Y" }}</p>
+                            </div>
+                            {% if task.is_completed %}
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full shrink-0">Done</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Overdue Tasks -->
+            {% if overdue_tasks %}
+            <div class="mb-6">
+                <div class="flex items-center mb-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                    <h4 class="text-sm font-medium text-gray-700">Overdue</h4>
+                </div>
+                <div class="space-y-2">
+                    {% for task in overdue_tasks %}
+                    <a href="{% url 'mycrm:dashboard_with_customer' task.customer_id %}"
+                       class="block p-3 {% if task.priority == 'high' %}bg-red-50 hover:bg-red-100{% elif task.priority == 'medium' %}bg-yellow-50 hover:bg-yellow-100{% else %}bg-blue-50 hover:bg-blue-100{% endif %} rounded-lg transition-colors cursor-pointer">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-block w-2 h-2 {% if task.priority == 'high' %}bg-red-500{% elif task.priority == 'medium' %}bg-yellow-500{% else %}bg-blue-500{% endif %} rounded-full"></span>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Due: {{ task.due_date|date:"M d, Y" }}</p>
+                            </div>
+                            {% if task.is_completed %}
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full shrink-0">Done</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Future Tasks -->
+            {% if future_tasks %}
+            <div>
+                <div class="flex items-center mb-2">
+                    <div class="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
+                    <h4 class="text-sm font-medium text-gray-700">Future Tasks</h4>
+                </div>
+                <div class="space-y-2">
+                    {% for task in future_tasks %}
+                    <a href="{% url 'mycrm:dashboard_with_customer' task.customer_id %}"
+                       class="block p-3 {% if task.priority == 'high' %}bg-red-50 hover:bg-red-100{% elif task.priority == 'medium' %}bg-yellow-50 hover:bg-yellow-100{% else %}bg-blue-50 hover:bg-blue-100{% endif %} rounded-lg transition-colors cursor-pointer">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-block w-2 h-2 {% if task.priority == 'high' %}bg-red-500{% elif task.priority == 'medium' %}bg-yellow-500{% else %}bg-blue-500{% endif %} rounded-full"></span>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Due: {{ task.due_date|date:"M d, Y" }}</p>
+                            </div>
+                            {% if task.is_completed %}
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full shrink-0">Done</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom scrollbar styles */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+</style>
+
+<script>
+function showCustomerDetail(customerId) {
+    const detail = document.getElementById('customer-detail');
+    if (detail) {
+        fetch(`/mycrm/customer/${customerId}/detail/`)
+            .then(r => r.text())
+            .then(html => {
+                detail.innerHTML = html;
+                htmx.process(detail);
+                // Update selected state in customer list if it exists
+                const customerList = document.querySelectorAll('#customer-list > div');
+                if (customerList) {
+                    customerList.forEach(row => row.classList.remove('bg-blue-50'));
+                    const selectedCustomer = document.querySelector(`[data-customer-id="${customerId}"]`);
+                    if (selectedCustomer) {
+                        selectedCustomer.classList.add('bg-blue-50');
+                    }
+                }
+            });
+    }
+}
+</script>

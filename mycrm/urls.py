@@ -6,6 +6,7 @@ app_name = 'mycrm'
 urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
+    path('customer/<int:customer_id>/', views.dashboard, name='dashboard_with_customer'),
     
     # Customer CRUD
     path('customer/add/', views.add_customer, name='add_customer'),

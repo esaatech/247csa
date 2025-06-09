@@ -7,16 +7,22 @@ from .models import Customer
 import json
 
 @login_required
-def dashboard(request):
+def dashboard(request, customer_id=None):
     """Main CRM dashboard view."""
     customers = Customer.objects.filter(created_by=request.user).order_by('-created_at')
-    first_customer = customers.first()
+    
+    if customer_id:
+        selected_customer = get_object_or_404(Customer, id=customer_id, created_by=request.user)
+    else:
+        selected_customer = customers.first()
+    
     welcome_message = "Welcome to your Customer Relationship Management System"
     
     return render(request, 'mycrm/crm-dashboard.html', {
         'customers': customers,
-        'customer': first_customer,
-        'welcome_message': welcome_message
+        'customer': selected_customer,
+        'welcome_message': welcome_message,
+        'selected_customer_id': customer_id  # Pass this to help with highlighting
     })
 
 @login_required

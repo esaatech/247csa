@@ -1,6 +1,6 @@
 {% if customers %}
     {% for customer in customers %}
-    <div class="border-b hover:bg-gray-50 cursor-pointer transition-colors {% if forloop.first %}bg-blue-50{% endif %}"
+    <div class="border-b hover:bg-gray-50 cursor-pointer transition-colors {% if selected_customer_id == customer.id or forloop.first and not selected_customer_id %}bg-blue-50{% endif %}"
          onclick="
             // Remove highlight from all customers
             document.querySelectorAll('#customer-list > div').forEach(row => row.classList.remove('bg-blue-50'));

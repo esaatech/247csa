@@ -19,4 +19,5 @@ urlpatterns = [
     path('mycrm/', include('mycrm.urls')),
     path('task/', include('task.urls')),
     path('interaction/', include('interaction.urls')),
+    path('settings/', include('settings.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

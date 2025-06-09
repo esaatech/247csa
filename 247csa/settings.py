@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'mycrm',
     'task',
     'interaction',
+    'settings',
 ]
 
 MIDDLEWARE = [
