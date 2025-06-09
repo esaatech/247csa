@@ -19,17 +19,18 @@
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="{% static 'csa/js/create_csa.js' %}"></script>
-        <script src="{% static 'csa/js/agent_detail.js' %}"></script>
-        <script src="{% static 'platform_connections/js/panel.js' %}"></script>
-        <script src="{% static 'platform_connections/js/platforms.js' %}"></script>
-        <script src="{% static 'chatui/chat_window.js' %}"></script>
-        <link rel="stylesheet" href="{% static 'chatui/css/chat_window.css' %}">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+    <script src="{% static 'csa/js/agent_detail.js' %}"></script>
+    <script src="{% static 'platform_connections/js/panel.js' %}"></script>
+    <script src="{% static 'platform_connections/js/platforms.js' %}"></script>
+    <script src="{% static 'chatui/chat_window.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'chatui/css/chat_window.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
 
 </head>
 <body class="h-full">
     <div class="min-h-screen flex flex-col">
+        {% block navigation %}
         <nav class="bg-white shadow-lg">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -77,6 +78,7 @@
                 </div>
             </div>
         </nav>
+        {% endblock %}
 
         <main class="flex-grow">
             {% block content %}
@@ -86,7 +88,6 @@
 
     <!-- Initialize Lucide Icons -->
     <script>
-
     // Simple custom tooltip implementation
 function showTooltip(element, message) {
     // Remove any existing tooltip
@@ -139,10 +140,10 @@ function showTooltip(element, message) {
 
     {% block js_scripts %}
     {% endblock %}
-        <script src="{% static 'faq_management/js/faq_manager.js' %}"></script>
-        <script src="{% static 'mycrm/js/customer-crm.js' %}"></script>
-<script src="{% static 'task/js/add_task.js' %}"></script>
-<script src="{% static 'task/js/tasks.js' %}"></script>
+    <script src="{% static 'faq_management/js/faq_manager.js' %}"></script>
+    <script src="{% static 'mycrm/js/customer-crm.js' %}"></script>
+    <script src="{% static 'task/js/add_task.js' %}"></script>
+    <script src="{% static 'task/js/tasks.js' %}"></script>
     <!-- Additional Scripts -->
 </body>
 </html> 
