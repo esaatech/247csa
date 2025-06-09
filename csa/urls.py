@@ -16,5 +16,6 @@ urlpatterns = [
     path('<uuid:pk>/edit/', views.csa_edit, name='edit'),
     path('crm-connect/', views.crm_connect, name='crm_connect'),
     path('<uuid:pk>/faqs/', views.csa_faqs_api, name='csa_faqs_api'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     
 ]

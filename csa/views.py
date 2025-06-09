@@ -19,6 +19,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def dashboard(request):
+    return render(request, 'csa/csa-dashboard.html')
+
 class CSAViewSet(viewsets.ModelViewSet):
     print("CSAViewSet called")
     serializer_class = CSASerializer
