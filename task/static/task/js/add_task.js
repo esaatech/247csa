@@ -63,6 +63,7 @@ async function handleAddTaskSubmit(event) {
         });
         const result = await response.json();
         if (response.ok) {
+            console.log("........task added successfully.................,,,,,,,,,,,,,")    
             // Dispatch custom event for embedding apps to listen to
             const taskAddedEvent = new CustomEvent('taskAdded', { detail: { taskId: result.task_id } });
             document.body.dispatchEvent(taskAddedEvent);

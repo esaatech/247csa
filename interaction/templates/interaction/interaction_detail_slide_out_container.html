@@ -9,7 +9,8 @@
               hx-put="{% url 'interaction:update_interaction_api' interaction.id %}"
               hx-trigger="submit"
               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-              hx-swap="none">
+              hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) { closeInteractionSlideOut(); document.body.dispatchEvent(new CustomEvent('interactionUpdated')); showToast('Interaction updated successfully'); }">
             <input type="hidden" name="activity_uuid" value="{{ activity_uuid }}">
             
             <div>
@@ -56,7 +57,7 @@
                             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                             hx-confirm="Are you sure you want to delete this interaction?"
                             hx-trigger="click"
-                            hx-on::after-request="if(event.detail.successful) { closeInteractionSlideOut(); document.body.dispatchEvent(new CustomEvent('interactionUpdated')); showToast('Interaction deleted successfully'); }">
+                            hx-on::after-request="if(event.detail.successful) { closeInteractionSlideOut(); document.body.dispatchEvent(new CustomEvent('interactionDeleted')); showToast('Interaction deleted successfully'); }">
                         Delete
                     </button>
                 </div>

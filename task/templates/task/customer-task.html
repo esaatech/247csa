@@ -1,0 +1,33 @@
+<!-- Customer Task Dashboard -->
+<div class="bg-white rounded-lg shadow">
+    <!-- Header -->
+    <div class="border-b border-gray-200 p-4 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-900">Customer Tasks</h2>
+        <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                hx-get="{% url 'task:add_task_slide_out' %}?task_uuid={{ task_uuid }}"
+                hx-target="#slide-out-container"
+                hx-swap="innerHTML">
+            <span class="flex items-center">
+                <svg class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Add Task
+            </span>
+        </button>
+    </div>
+
+    <!-- Task List Container -->
+    <div id="task-list-container">
+        {% include 'task/tasks.html' with tasks=tasks task_uuid=task_uuid %}
+    </div>
+
+    <!-- Slide-out Container -->
+    <div id="slide-out-container"></div>
+</div>
+
+<script>
+    // Listen for task updates
+    document.body.addEventListener('taskUpdated', () => {
+        htmx.ajax('GET', `/task/tasks/?task_uuid={{ task_uuid }}`, {target: '#task-list-container'});
+    });
+</script>

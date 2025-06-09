@@ -58,7 +58,14 @@ document.getElementById('addInteractionForm').addEventListener('submit', async f
         const result = await response.json();
         if (response.ok) {
             // Dispatch custom event for embedding apps to listen to
-            document.body.dispatchEvent(new CustomEvent('interactionAdded'));
+            document.body.dispatchEvent(new CustomEvent('interactionAdded', {
+                detail: {
+                    interactionId: result.interaction_id,
+                    type: data.type,
+                    medium: data.medium,
+                    description: data.description
+                }
+            }));
             // Clear form
             form.reset();
             // Close slide-out if it exists

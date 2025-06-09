@@ -3,25 +3,27 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from .models import Customer, Interaction, Task
-from task.models import Task as TaskApp  # Import the Task model from task app
+from .models import Customer
 import json
-
-
-
-
 
 @login_required
 def dashboard(request):
-    """Main dashboard view"""
-    return render(request, 'mycrm/crm-dashboard.html')
-
-
+    """Main CRM dashboard view."""
+    customers = Customer.objects.filter(created_by=request.user).order_by('-created_at')
+    first_customer = customers.first()
+    welcome_message = "Welcome to your Customer Relationship Management System"
+    
+    return render(request, 'mycrm/crm-dashboard.html', {
+        'customers': customers,
+        'customer': first_customer,
+        'welcome_message': welcome_message
+    })
 
 @login_required
-def test_view(request):
-    """Main test interface that loads customer form and view/edit section"""
-    return render(request, 'mycrm/test.html')
+def get_customer_detail(request, customer_id):
+    """Get detailed view of a customer."""
+    customer = get_object_or_404(Customer, id=customer_id, created_by=request.user)
+    return render(request, 'mycrm/detail.html', {'customer': customer})
 
 @login_required
 def add_customer(request):
@@ -32,161 +34,141 @@ def add_customer(request):
         if mode == 'edit':
             customer_id = request.GET.get('customer_id')
             customer = get_object_or_404(Customer, id=customer_id)
-        return render(request, 'mycrm/addcustomer.html', {
+        return render(request, 'mycrm/add_customer.html', {
             'mode': mode,
             'customer': customer
         })
     return HttpResponse(status=400)
 
-@login_required
-def customers_list(request):
-    """List all customers with their interactions and tasks"""
-    customers = Customer.objects.all().order_by('-created_at')
-    if request.headers.get('HX-Request'):
-        return render(request, 'mycrm/customers.html', {'customers': customers})
-    return HttpResponse(status=400)
-
-# MCP API Endpoints
 @require_http_methods(["POST"])
+@login_required
 def create_customer(request):
+    """Create a new customer."""
     try:
         data = json.loads(request.body)
+        
+        # Check if email already exists
+        if Customer.objects.filter(email=data['email'], created_by=request.user).exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': 'A customer with this email address already exists'
+            }, status=400)
+            
         customer = Customer.objects.create(
+            created_by=request.user,
             name=data['name'],
             email=data['email'],
             phone=data.get('phone', ''),
-            address=data.get('address', ''),
             company_name=data.get('company_name', ''),
             industry=data.get('industry', ''),
             company_size=data.get('company_size', ''),
-            relationship_status=data.get('relationship_status', 'prospect'),
-            tags=data.get('tags', [])
+            relationship_status=data.get('relationship_status', 'lead')
         )
         return JsonResponse({
+            'status': 'success',
             'customer_id': customer.id,
-            'task_uuid': customer.task_uuid,
-            'activity_uuid': customer.activity_uuid,
-            'status': 'created'
+            'message': 'Customer created successfully'
         })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-@require_http_methods(["GET"])
-def get_customer(request):
-    try:
-        email = request.GET.get('email')
-        customer = get_object_or_404(Customer, email=email)
+    except json.JSONDecodeError:
         return JsonResponse({
-            'customer': {
-                'id': customer.id,
-                'name': customer.name,
-                'email': customer.email,
-                'phone': customer.phone,
-                'address': customer.address,
-                'company_name': customer.company_name,
-                'industry': customer.industry,
-                'company_size': customer.company_size,
-                'relationship_status': customer.relationship_status,
-                'notes': customer.notes,
-                'tags': customer.tags,
-                'created_at': customer.created_at.isoformat(),
-                'updated_at': customer.updated_at.isoformat()
-            }
-        })
+            'status': 'error',
+            'message': 'Invalid JSON data'
+        }, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        # Get the specific error message
+        error_message = str(e)
+        if 'unique constraint' in error_message.lower() and 'email' in error_message.lower():
+            message = 'A customer with this email address already exists'
+        else:
+            message = 'Failed to create customer: ' + error_message
+            
+        return JsonResponse({
+            'status': 'error',
+            'message': message
+        }, status=400)
 
-@require_http_methods(["PUT"])
-def update_customer(request):
+@require_http_methods(["PUT", "PATCH"])
+@login_required
+def update_customer(request, customer_id):
+    """Update an existing customer."""
     try:
+        customer = get_object_or_404(Customer, id=customer_id, created_by=request.user)
         data = json.loads(request.body)
-        customer = get_object_or_404(Customer, id=data['id'])
         
-        fields_to_update = data.get('fields_to_update', {})
-        for field, value in fields_to_update.items():
-            if hasattr(customer, field):
-                setattr(customer, field, value)
+        # Check if email is being changed and if it already exists
+        if 'email' in data and data['email'] != customer.email:
+            if Customer.objects.filter(email=data['email'], created_by=request.user).exists():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'A customer with this email address already exists'
+                }, status=400)
+        
+        # Update fields
+        customer.name = data.get('name', customer.name)
+        customer.email = data.get('email', customer.email)
+        customer.phone = data.get('phone', customer.phone)
+        customer.company_name = data.get('company_name', customer.company_name)
+        customer.industry = data.get('industry', customer.industry)
+        customer.company_size = data.get('company_size', customer.company_size)
+        customer.relationship_status = data.get('relationship_status', customer.relationship_status)
         
         customer.save()
-        return JsonResponse({'status': 'updated'})
+        return JsonResponse({
+            'status': 'success',
+            'customer_id': customer.id,
+            'message': 'Customer updated successfully'
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON data'
+        }, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        # Get the specific error message
+        error_message = str(e)
+        if 'unique constraint' in error_message.lower() and 'email' in error_message.lower():
+            message = 'A customer with this email address already exists'
+        else:
+            message = 'Failed to update customer: ' + error_message
+            
+        return JsonResponse({
+            'status': 'error',
+            'message': message
+        }, status=400)
 
 @require_http_methods(["DELETE"])
-def delete_customer(request):
+@login_required
+def delete_customer(request, customer_id):
+    """Delete a customer."""
     try:
-        data = json.loads(request.body)
-        customer = get_object_or_404(Customer, id=data['id'])
-        
-        # Delete associated tasks from task app
-        TaskApp.objects.filter(task_uuid=customer.task_uuid).delete()
-        
-        # Delete associated activities/interactions (if you have an Activity model)
-        # ActivityApp.objects.filter(activity_uuid=customer.activity_uuid).delete()
-        
-        # Delete the customer (this will cascade delete interactions and old tasks)
+        customer = get_object_or_404(Customer, id=customer_id, created_by=request.user)
         customer.delete()
-        return JsonResponse({'status': 'deleted'})
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Customer deleted successfully'
+        })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
 
 @require_http_methods(["POST"])
-def log_interaction(request):
-    try:
-        data = json.loads(request.body)
-        customer = get_object_or_404(Customer, id=data['customer_id'])
-        
-        interaction = Interaction.objects.create(
-            customer=customer,
-            type=data['type'],
-            medium=data['medium'],
-            description=data['description'],
-            created_by=request.user
+@login_required
+def search_customers(request):
+    """Search customers and return updated list."""
+    search_term = request.POST.get('search', '').strip()
+    customers = Customer.objects.filter(created_by=request.user)
+    
+    if search_term:
+        customers = customers.filter(
+            name__icontains=search_term
+        ) | customers.filter(
+            email__icontains=search_term
+        ) | customers.filter(
+            company_name__icontains=search_term
         )
-        
-        return JsonResponse({
-            'interaction_id': interaction.id,
-            'status': 'logged'
-        })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-@require_http_methods(["POST"])
-def create_task(request):
-    try:
-        data = json.loads(request.body)
-        customer = get_object_or_404(Customer, id=data['customer_id'])
-        
-        task = Task.objects.create(
-            customer=customer,
-            title=data['title'],
-            due_date=data['due_date'],
-            priority=data.get('priority', 'medium'),
-            assigned_to=request.user
-        )
-        
-        return JsonResponse({
-            'task_id': task.id,
-            'status': 'created'
-        })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-@require_http_methods(["GET"])
-def get_tasks(request):
-    try:
-        customer_id = request.GET.get('customer_id')
-        customer = get_object_or_404(Customer, id=customer_id)
-        tasks = Task.objects.filter(customer=customer)
-        
-        return JsonResponse({
-            'tasks': [{
-                'id': task.id,
-                'title': task.title,
-                'due_date': task.due_date.isoformat(),
-                'is_completed': task.is_completed,
-                'priority': task.priority
-            } for task in tasks]
-        })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+    
+    return render(request, 'mycrm/customers_list.html', {
+        'customers': customers
+    })

@@ -111,3 +111,39 @@ function getCookie(name) {
     }
     return cookieValue;
 } 
+
+document.body.addEventListener('taskAdded', async (event) => {
+    // Get the task_uuid from the URL since that's what we're using in the page
+    const tasksContainer = document.querySelector('#tasks-container');
+    const task_uuid = tasksContainer.getAttribute('data-task-uuid');
+    console.log("........task_uuid..............,,,,,,,,,,,,,", task_uuid)    
+
+    
+    try {
+        // Use task_uuid instead of task_id to fetch tasks
+        const response = await fetch(`/task/tasks/?task_uuid=${task_uuid}`);
+        const taskHtml = await response.text();
+        const tasksContainer = document.querySelector('#tasks-container');
+        if (tasksContainer) {
+            if (tasksContainer.querySelector('.text-gray-500')) {
+                // Remove "No tasks found" message if it exists
+                tasksContainer.innerHTML = '';
+            }
+            // Create a temporary container to parse the HTML
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = taskHtml;
+            
+            // Get the actual task list content
+            const newTaskList = tempContainer.querySelector('.space-y-4');
+            if (newTaskList) {
+                tasksContainer.innerHTML = newTaskList.innerHTML;
+                initTaskDropdowns(); // Re-initialize dropdowns and event handlers
+                initFlatpickr(); // Re-initialize date pickers
+            }
+        }
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+        showToast('Error loading tasks', 'error');
+    }
+});
+            

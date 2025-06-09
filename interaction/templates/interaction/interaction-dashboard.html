@@ -1,0 +1,69 @@
+<!-- Interaction Dashboard -->
+<div class="bg-white rounded-lg shadow">
+    <!-- Header -->
+    <div class="border-b border-gray-200 p-4 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-900">Interactions</h2>
+        <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                hx-get="{% url 'interaction:add_interaction_slide_out' %}?activity_uuid={{ activity_uuid }}"
+                hx-target="body"
+                hx-swap="beforeend">
+            <span class="flex items-center">
+                <svg class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Add Interaction
+            </span>
+        </button>
+    </div>
+
+    <!-- Interaction List -->
+    <div class="divide-y divide-gray-200" id="interaction-list">
+        {% if interactions %}
+            {% for interaction in interactions %}
+            <div class="p-4 hover:bg-gray-50 transition-colors"
+                 hx-get="{% url 'interaction:interaction_detail_slide_out' interaction.id %}"
+                 hx-target="body"
+                 hx-swap="beforeend">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-sm font-medium text-gray-900">{{ interaction.get_type_display }}</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ interaction.get_medium_display }}
+                            </span>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-600 line-clamp-2">{{ interaction.description }}</p>
+                        <div class="mt-2 flex items-center space-x-2 text-xs text-gray-500">
+                            <span>{{ interaction.created_at|date:"M d, Y H:i" }}</span>
+                            <span>•</span>
+                            <span>by {{ interaction.created_by.get_full_name|default:interaction.created_by.username }}</span>
+                        </div>
+                    </div>
+                    <!-- Interaction Actions -->
+                    <div class="flex-shrink-0">
+                        <button class="text-gray-400 hover:text-gray-500">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="p-4 text-center text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                </svg>
+                <p class="mt-2">No interactions yet</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Listen for interaction updates
+    document.body.addEventListener('interactionUpdated', () => {
+        htmx.ajax('GET', `/interaction/list/?activity_uuid={{ activity_uuid }}`, {target: '#interaction-list'});
+    });
+</script> 

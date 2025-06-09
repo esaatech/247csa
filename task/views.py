@@ -66,7 +66,7 @@ def tasks_list(request):
         task_uuid = str(DEFAULT_UUID)
     tasks = Task.objects.filter(task_uuid=task_uuid).order_by('-created_at')
     print(f"Fetching tasks for task_uuid={task_uuid}, found {tasks.count()} tasks.")  # Debug print
-    return render(request, 'task/tasks.html', {'tasks': tasks})
+    return render(request, 'task/tasks.html', {'tasks': tasks,'task_uuid':task_uuid})
 
 def tasks_right_slide_out(request):
     print(".............tasks_right_slide_out.................")

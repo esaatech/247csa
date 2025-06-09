@@ -1,0 +1,83 @@
+<!-- Search and Add Customer Section -->
+<div class="bg-white shadow-sm border-b">
+    <div class="p-4 space-y-4">
+        <!-- Search Bar -->
+        <div class="relative">
+            {% csrf_token %}
+            <input type="text"
+                   class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                   placeholder="Search customers..."
+                   name="search"
+                   hx-post="{% url 'mycrm:search_customers' %}"
+                   hx-trigger="keyup changed delay:500ms"
+                   hx-target="#customer-list"
+                   hx-indicator="#search-indicator"
+                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div id="search-indicator" class="htmx-indicator absolute right-3 top-2">
+                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Add Customer Button -->
+        <div class="flex justify-between items-center">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    onclick="showAddCustomerPanel()">
+                <span class="flex items-center">
+                    <svg class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Add New Customer
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Customer List -->
+<div class="overflow-y-auto h-[calc(100vh-12rem)]" id="customer-list">
+    {% include "mycrm/customers_list.html" %}
+</div>
+
+<!-- Hidden container for customer data -->
+<div id="selected-customer-data" class="hidden"></div>
+
+<script>
+    // Handle customer selection and update detail view
+    htmx.on('htmx:afterSwap', (evt) => {
+        if (evt.detail.target.id === 'selected-customer-data') {
+            const customerData = JSON.parse(evt.detail.target.textContent);
+            // Dispatch event for detail view to handle
+            document.dispatchEvent(new CustomEvent('customerSelected', {
+                detail: customerData
+            }));
+            
+            // Update selected state in list
+            document.querySelectorAll('#customer-list > div').forEach(row => {
+                row.classList.remove('bg-blue-50');
+                if (row.dataset.customerId === customerData.id) {
+                    row.classList.add('bg-blue-50');
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .htmx-indicator{
+        display: none;
+    }
+    .htmx-request .htmx-indicator{
+        display: block;
+    }
+    .htmx-request.htmx-indicator{
+        display: block;
+    }
+</style> 

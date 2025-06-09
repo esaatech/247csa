@@ -85,12 +85,14 @@ def update_interaction(request, interaction_id):
         return JsonResponse({'error': str(e)}, status=400)
 
 def interactions_list(request):
+    print("........interactions_list.......fired.......,,,,,,,,,,,,,")    
     """Render the interactions list."""
     activity_uuid = request.GET.get('activity_uuid')
+    print("........activity_uuid.......,,,,,,,,,,,,,", activity_uuid)    
     if not activity_uuid:
         activity_uuid = str(DEFAULT_UUID)
     interactions = Interaction.objects.filter(activity_uuid=activity_uuid).order_by('-created_at')
-    return render(request, 'interaction/interactions.html', {'interactions': interactions})
+    return render(request, 'interaction/interactions.html', {'interactions': interactions,'activity_uuid':activity_uuid })
 
 def interactions_right_slide_out(request):
     """Render the interactions list in a slide-out container."""
