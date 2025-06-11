@@ -1,14 +1,15 @@
-import environ
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
-env = environ.Env()
+# Load environment variables from .env file
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-development-key')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-development-key')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
@@ -39,6 +40,9 @@ INSTALLED_APPS = [
     'task',
     'interaction',
     'settings',
+    'team',  # New team management app
+    'django_mailbox',
+    'email_utility',
 ]
 
 MIDDLEWARE = [
@@ -128,10 +132,10 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your-client-id'  # Google Client ID
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your-client-secret'  # Google Client Secret
 
 # Login URLs
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_URL = 'logout'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = 'authentication:login'
+LOGIN_REDIRECT_URL = 'home:home'
+LOGOUT_URL = 'authentication:logout'
+LOGOUT_REDIRECT_URL = 'authentication:login'
 
 # CRM specific settings
 ADMIN_EMAIL = "admin@example.com"
@@ -140,11 +144,34 @@ DOMAIN_NAME = "localhost:8000"
 
 # Email settings (if you want to use email features)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'your-smtp-server'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@example.com'
-EMAIL_HOST_PASSWORD = 'your-email-password'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '247CSA <noreply@247csa.com>')
+
+# Debug prints
+print("Email Settings:")
+print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER}")
+print(f"EMAIL_HOST_PASSWORD: {'SET' if EMAIL_HOST_PASSWORD else 'NOT SET'}")
+print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+
+# Django-mailbox Configuration
+DJANGO_MAILBOX = {
+    'STORE_ORIGINAL_MESSAGE': True,
+    'COMPRESS_ATTACHMENTS': False,
+    'ATTACHMENT_UPLOAD_TO': 'mailbox_attachments/%Y/%m/%d/',
+    'PROCESS_UNREAD_MESSAGES': True,
+    'STRIP_UNALLOWED_MIMETYPES': False,
+    'ALLOWED_MIMETYPES': None,
+    'GMAIL_IMAP_FOLDER': 'INBOX',  # Specifically target the inbox
+    'GMAIL_IMAP_KEEP_EMAILS': True,
+    'PROCESS_LATEST_MESSAGES_FIRST': True,  # Process newest messages first
+    'MAX_MESSAGES_PER_FETCH': 10,  # Limit number of messages per fetch
+}
+
+
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -213,3 +240,4 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
+

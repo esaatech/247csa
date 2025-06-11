@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .button { display: inline-block; padding: 10px 20px; margin: 10px 5px; text-decoration: none; border-radius: 5px; }
+        .accept { background-color: #4F46E5; color: white; }
+        .decline { background-color: #EF4444; color: white; }
+        .footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>You've Been Invited to Join {{ team.name }}</h2>
+        
+        <p>Hello,</p>
+        
+        <p>{{ inviter.get_full_name|default:inviter.email }} has invited you to join their team on 247CSA.</p>
+        
+        <p>This invitation will expire on {{ expires_at|date:"F j, Y" }} at {{ expires_at|time:"g:i A" }}.</p>
+        
+        <div style="margin: 25px 0;">
+            <a href="{{ accept_url }}" class="button accept">Accept Invitation</a>
+            <a href="{{ decline_url }}" class="button decline">Decline</a>
+        </div>
+        
+        <p>If you're having trouble with the buttons above, you can copy and paste these links into your browser:</p>
+        
+        <p>Accept: {{ accept_url }}</p>
+        <p>Decline: {{ decline_url }}</p>
+        
+        <div class="footer">
+            <p>If you didn't expect this invitation, you can safely ignore this email.</p>
+            <p>247CSA - Customer Service Automation</p>
+        </div>
+    </div>
+</body>
+</html> 

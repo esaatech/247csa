@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <!-- Team Header Section -->
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">{{ team.name }}</h2>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Team Details</p>
+            </div>
+            <div class="flex space-x-4">
+                {% if can_manage_team %}
+                    <a href="{% url 'team:add_member' team_id=team.id %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Invite Member
+                    </a>
+                {% endif %}
+                {% if member.is_admin %}
+                    <a href="{% url 'team:edit' team_id=team.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Edit Team
+                    </a>
+                {% endif %}
+                {% if member.is_owner %}
+                    <a href="{% url 'team:delete' team_id=team.id %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Delete Team
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Team Info Section -->
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Team Owner</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ team.owner.email }}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Created</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ team.created_at|date:"M d, Y" }}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Your Role</dt>
+                    <dd class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if member.role == 'owner' %}
+                                bg-purple-100 text-purple-800
+                            {% elif member.role == 'admin' %}
+                                bg-blue-100 text-blue-800
+                            {% else %}
+                                bg-gray-100 text-gray-800
+                            {% endif %}">
+                            {{ member.get_role_display }}
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+        
+        <!-- Team Members Section -->
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Team Members</h3>
+            </div>
+            
+            <div class="flow-root mt-6">
+                <ul role="list" class="-my-5 divide-y divide-gray-200">
+                    {% for team_member in team_members %}
+                        {% if not team_member.is_owner %}
+                        <li class="py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                            <span class="text-gray-500 font-medium">{{ team_member.user.get_initials }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">{{ team_member.user.get_full_name|default:team_member.user.email }}</p>
+                                        <p class="text-sm text-gray-500">{{ team_member.user.email }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if team_member.role == 'owner' %}
+                                            bg-purple-100 text-purple-800
+                                        {% elif team_member.role == 'admin' %}
+                                            bg-blue-100 text-blue-800
+                                        {% else %}
+                                            bg-gray-100 text-gray-800
+                                        {% endif %}">
+                                        {{ team_member.get_role_display }}
+                                    </span>
+                                    {% include "team/components/role_management.html" with team_member=team_member member=member team=team %}
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% if pending_invitations %}
+            <!-- Pending Invitations -->
+            <div class="mt-8">
+                <h3 class="text-lg font-medium text-gray-900">Pending Invitations</h3>
+                <div class="mt-4 space-y-4">
+                    {% for invitation in pending_invitations %}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">{{ invitation.email }}</div>
+                            <div class="text-sm text-gray-500">Invited {{ invitation.created_at|timesince }} ago</div>
+                        </div>
+                        {% if can_manage_team %}
+                        <form method="POST" action="{% url 'team:cancel_invitation' team.id invitation.id %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="text-sm text-red-600 hover:text-red-700">
+                                Cancel Invitation
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Alpine.js for dropdowns -->
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{% endblock %} 

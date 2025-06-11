@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to 247CSA!</h2>
+        
+        <p>Hello {{ user.get_full_name|default:user.email }},</p>
+        
+        <p>Thank you for joining 247CSA. We're excited to have you on board!</p>
+        
+        <p>With 247CSA, you can:</p>
+        <ul>
+            <li>Manage your customer service agents</li>
+            <li>Track customer interactions</li>
+            <li>Collaborate with team members</li>
+            <li>Monitor performance metrics</li>
+        </ul>
+        
+        <p>To get started, click the button below to log in to your account:</p>
+        
+        <a href="{{ login_url }}" class="button">Log In to 247CSA</a>
+        
+        <p>If you have any questions or need assistance, don't hesitate to contact our support team.</p>
+        
+        <div class="footer">
+            <p>Best regards,<br>The 247CSA Team</p>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,36 @@
+{% if member.is_owner and not team_member.is_owner and team_member != member %}
+<!-- Management Options -->
+<div class="relative" x-data="{ open: false }">
+    <button @click="open = !open" type="button" 
+            class="text-gray-400 hover:text-gray-500 focus:outline-none">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+    </button>
+    <div x-show="open" @click.away="open = false" 
+         class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100">
+        <div class="py-1">
+            <form method="POST" action="{% url 'team:change_role' team.id team_member.id %}">
+                {% csrf_token %}
+                <button type="submit" name="role" value="admin" 
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Make Admin
+                </button>
+                <button type="submit" name="role" value="member" 
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Make Member
+                </button>
+            </form>
+        </div>
+        <div class="py-1">
+            <form method="POST" action="{% url 'team:remove_member' team.id team_member.id %}">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                    Remove from Team
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %} 

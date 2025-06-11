@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-900">My Teams</h1>
+        <a href="{% url 'team:create' %}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-150 ease-in-out">
+            Create Team
+        </a>
+    </div>
+
+    {% if user_teams %}
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {% for member in user_teams %}
+                <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition duration-150 ease-in-out">
+                    <div class="flex justify-between items-start">
+                        <h2 class="text-xl font-semibold text-gray-900">{{ member.team.name }}</h2>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if member.role == 'owner' %}
+                                bg-purple-100 text-purple-800
+                            {% elif member.role == 'admin' %}
+                                bg-blue-100 text-blue-800
+                            {% else %}
+                                bg-gray-100 text-gray-800
+                            {% endif %}">
+                            {{ member.get_role_display }}
+                        </span>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">Team Owner: {{ member.team.owner.email }}</p>
+                    <div class="mt-4 flex justify-between items-center">
+                        <a href="{% url 'team:detail' team_id=member.team.id %}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            View Details
+                        </a>
+                        <span class="text-sm text-gray-500">
+                            Joined {{ member.joined_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No teams</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating a new team.</p>
+            <div class="mt-6">
+                <a href="{% url 'team:create' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Create Team
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 
