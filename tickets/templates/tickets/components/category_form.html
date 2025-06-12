@@ -1,0 +1,108 @@
+{% load crispy_forms_tags %}
+
+<div class="bg-white shadow sm:rounded-lg" x-data="{ open: false }">
+    <div class="px-4 py-5 sm:p-6">
+        <div class="flex justify-between items-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Categories</h3>
+            <button @click="open = !open" 
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                New Category
+            </button>
+        </div>
+
+        <!-- Category Form -->
+        <div x-show="open" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 transform -translate-y-2"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform translate-y-0"
+             x-transition:leave-end="opacity-0 transform -translate-y-2"
+             class="mt-5">
+            <form id="categoryForm" method="post" action="{% url 'tickets:create_category' %}" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="team" value="{{ request.user.team_memberships.first.team.id }}">
+                {% crispy form %}
+                <div class="flex justify-end space-x-3">
+                    <button type="button" @click="open = false"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Create Category
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Category List -->
+        <div class="mt-6">
+            <div class="flow-root">
+                <ul role="list" class="-my-5 divide-y divide-gray-200">
+                    {% for category in categories %}
+                    <li class="py-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    {{ category.name }}
+                                </p>
+                                {% if category.description %}
+                                <p class="text-sm text-gray-500 truncate">
+                                    {{ category.description }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ category.tickets.count }} tickets
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="py-4 text-center text-sm text-gray-500">
+                        No categories yet
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alpine.js for dropdown -->
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<!-- AJAX form submission -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('categoryForm');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close the form
+                Alpine.store('open', false);
+                // Refresh the page to show new category
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+});</script> 

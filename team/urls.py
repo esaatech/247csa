@@ -21,4 +21,5 @@ urlpatterns = [
     path('invitation/<uuid:invitation_id>/accept/', views.accept_invitation, name='accept_invitation'),
     path('invitation/<uuid:invitation_id>/decline/', views.decline_invitation, name='decline_invitation'),
     path('<uuid:team_id>/invitation/<uuid:invitation_id>/cancel/', views.cancel_invitation, name='cancel_invitation'),
+    path('invitation/<uuid:invitation_id>/register/', views.invited_register, name='invited_register'),
 ] 

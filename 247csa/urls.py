@@ -22,4 +22,5 @@ urlpatterns = [
     path('settings/', include('settings.urls')),
     path('team/', include('team.urls')),
     path('email/', include('email_utility.urls')),
+    path('tickets/', include('tickets.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

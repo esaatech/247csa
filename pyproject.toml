@@ -40,6 +40,8 @@ channels = "^4.2.2"
 websockets = "^15.0.1"
 django-mailbox = "^4.10.1"
 bleach = "^6.2.0"
+django-crispy-forms = "^2.4"
+crispy-tailwind = "^1.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

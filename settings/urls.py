@@ -10,4 +10,5 @@ urlpatterns = [
     path('integrations/', views.integration_settings, name='integrations'),
     path('billing/', views.billing_settings, name='billing'),
     path('security/', views.security_settings, name='security'),
+    path('delete-account/', views.delete_account, name='delete_account'),
 ] 

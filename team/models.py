@@ -88,7 +88,7 @@ class TeamInvitation(models.Model):
         
     def get_accept_url(self):
         """Get the full URL for accepting the invitation"""
-        accept_path = reverse('team:accept_invitation', kwargs={'invitation_id': self.id})
+        accept_path = reverse('team:invited_register', kwargs={'invitation_id': self.id})
         return f"{settings.DOMAIN_NAME}{accept_path}"
         
     def get_decline_url(self):

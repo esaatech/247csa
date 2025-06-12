@@ -156,4 +156,34 @@ class NotificationService:
             subject="Verify Your Email Address",
             template_name="email_utility/emails/verify_email",
             context=context
+        )
+    
+    @classmethod
+    def send_team_removal_notification(cls, user_email, team_name, removed_by) -> bool:
+        """Send notification when a user is removed from a team"""
+        context = {
+            'team_name': team_name,
+            'removed_by': removed_by,
+        }
+        
+        return cls.send_email(
+            to_email=user_email,
+            subject=f"You have been removed from {team_name}",
+            template_name="team/emails/removal_notification",
+            context=context
+        )
+    
+    @classmethod
+    def send_account_deletion_notification(cls, user_email, user_name) -> bool:
+        """Send notification when a user deletes their account"""
+        context = {
+            'user_name': user_name,
+            'support_email': settings.ADMIN_EMAIL,
+        }
+        
+        return cls.send_email(
+            to_email=user_email,
+            subject="Your Account Has Been Deleted",
+            template_name="email_utility/account_deletion_notification",
+            context=context
         ) 

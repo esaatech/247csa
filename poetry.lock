@@ -490,6 +490,24 @@ files = [
 ]
 
 [[package]]
+name = "crispy-tailwind"
+version = "1.0.3"
+description = "Tailwind CSS for Django Crispy Forms"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "crispy-tailwind-1.0.3.tar.gz", hash = "sha256:2bc9f616d406e4b003f25d46fcb0079f1c2522719d97adb107667271d849459a"},
+    {file = "crispy_tailwind-1.0.3-py3-none-any.whl", hash = "sha256:31427f66b1c4fd0d6fb040f4197cfb97d104cdbe7641ea2dea940c0057c4db4b"},
+]
+
+[package.dependencies]
+django = ">=4.2"
+django-crispy-forms = ">=2.0"
+
+[package.extras]
+test = ["pytest", "pytest-django"]
+
+[[package]]
 name = "cryptography"
 version = "44.0.0"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -626,6 +644,20 @@ files = [
 
 [package.dependencies]
 asgiref = ">=3.6"
+django = ">=4.2"
+
+[[package]]
+name = "django-crispy-forms"
+version = "2.4"
+description = "Best way to have Django DRY forms"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django_crispy_forms-2.4-py3-none-any.whl", hash = "sha256:5a4b99876cfb1bdd3e47727731b6d4197c51c0da502befbfbec6a93010b02030"},
+    {file = "django_crispy_forms-2.4.tar.gz", hash = "sha256:915e1ffdeb2987d78b33fabfeff8e5203c8776aa910a3a659a2c514ca125f3bd"},
+]
+
+[package.dependencies]
 django = ">=4.2"
 
 [[package]]
@@ -2525,4 +2557,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "851b67e12df8b9c1c0081478d9f727f8d025af035c081c3b449dcb4ffa766727"
+content-hash = "a51e605f5779e893a15b2370f25c3acc019d33e7896ce1b2e8043c0974f14a60"

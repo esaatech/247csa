@@ -3,10 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden
 from django.utils import timezone
 from datetime import timedelta
-from .models import Team, TeamMember, TeamInvitation
+from .models import Team, TeamMember, TeamInvitation, User
 from django.contrib import messages
 from email_utility.services.notification_service import NotificationService
 from .forms import TeamForm
+from authentication.forms import CustomUserCreationForm
+from django.contrib.auth import login
 
 @login_required
 def team_list(request):
@@ -45,6 +47,10 @@ def team_detail(request, team_id):
         is_accepted=False,
         expires_at__gt=timezone.now()
     ).order_by('-created_at')
+    
+    # Clear any existing messages to prevent them from persisting
+    storage = messages.get_messages(request)
+    storage.used = True
     
     return render(request, 'team/detail.html', {
         'team': team,
@@ -106,6 +112,34 @@ def add_member(request, team_id):
         role = request.POST.get('role', TeamMember.Roles.MEMBER)
         
         if email and role in dict(TeamMember.Roles.choices):
+            # Check for existing pending invitation
+            existing_invitation = TeamInvitation.objects.filter(
+                team=team,
+                email=email,
+                is_accepted=False,
+                expires_at__gt=timezone.now()
+            ).first()
+            
+            if existing_invitation:
+                messages.warning(request, f"An invitation for {email} is already pending.")
+                return redirect('team:detail', team_id=team.id)
+
+            # Check if user already exists
+            existing_user = User.objects.filter(email=email).first()
+            
+            if existing_user:
+                # Check if user is already in this team
+                existing_member = TeamMember.objects.filter(user=existing_user, team=team, is_active=True).first()
+                if existing_member:
+                    messages.warning(request, f"{email} is already a member of this team.")
+                    return redirect('team:detail', team_id=team.id)
+                
+                # Check if user is in another team
+                other_team_member = TeamMember.objects.filter(user=existing_user, is_active=True).first()
+                if other_team_member:
+                    messages.error(request, f"{email} is already a member of another team. Users can only be in one team.")
+                    return redirect('team:detail', team_id=team.id)
+            
             try:
                 # Create invitation that expires in 7 days
                 expires_at = timezone.now() + timedelta(days=7)
@@ -141,8 +175,30 @@ def remove_member(request, team_id, member_id):
         return HttpResponseForbidden("You don't have permission to remove this member.")
     
     if request.method == 'POST':
-        member_to_remove.is_active = False
-        member_to_remove.save()
+        # Store user email for notification
+        removed_user_email = member_to_remove.user.email
+        removed_user_name = member_to_remove.user.get_full_name() or removed_user_email
+        
+        # Actually delete the team membership instead of just marking inactive
+        member_to_remove.delete()
+        
+        # Send notification to the removed user
+        try:
+            NotificationService.send_team_removal_notification(
+                user_email=removed_user_email,
+                team_name=team.name,
+                removed_by=request.user.get_full_name() or request.user.email
+            )
+            messages.success(
+                request, 
+                f"{removed_user_name} has been removed from the team. They have been notified by email."
+            )
+        except Exception as e:
+            messages.success(
+                request, 
+                f"{removed_user_name} has been removed from the team. However, we couldn't send them a notification email."
+            )
+        
         return redirect('team:detail', team_id=team.id)
     
     return render(request, 'team/remove_member_confirm.html', {
@@ -215,13 +271,9 @@ def accept_invitation(request, invitation_id):
         expires_at__gt=timezone.now()
     )
     
-    # If user is not logged in, redirect to registration with invitation info
+    # If user is not logged in, redirect to team-specific registration
     if not request.user.is_authenticated:
-        # Store invitation ID in session
-        request.session['pending_invitation_id'] = str(invitation_id)
-        # Redirect to registration with next parameter
-        messages.info(request, "Please create an account or log in to accept the team invitation.")
-        return redirect('authentication:register')
+        return redirect('team:invited_register', invitation_id=invitation_id)
     
     # Check if the invitation matches the user's email
     if invitation.email.lower() != request.user.email.lower():
@@ -271,3 +323,46 @@ def cancel_invitation(request, team_id, invitation_id):
         messages.success(request, "Invitation cancelled successfully.")
     
     return redirect('team:detail', team_id=team.id)
+
+def invited_register(request, invitation_id):
+    """Special registration view for invited users."""
+    # Get and validate invitation
+    invitation = get_object_or_404(
+        TeamInvitation,
+        id=invitation_id,
+        is_accepted=False,
+        expires_at__gt=timezone.now()
+    )
+    
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            # Create user but don't create default team
+            user = form.save(commit=False)
+            user.email = invitation.email  # Ensure email matches invitation
+            user.save()
+            
+            # Create team membership
+            TeamMember.objects.create(
+                team=invitation.team,
+                user=user,
+                role=invitation.role,
+                invited_by=invitation.invited_by
+            )
+            
+            # Mark invitation as accepted
+            invitation.is_accepted = True
+            invitation.save()
+            
+            # Log the user in with the specific backend
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            
+            messages.success(request, f"Welcome to {invitation.team.name}! Your account has been created and you've been added to the team.")
+            return redirect('team:detail', team_id=invitation.team.id)
+    else:
+        form = CustomUserCreationForm(initial={'email': invitation.email})
+    
+    return render(request, 'team/invited_register.html', {
+        'form': form,
+        'invitation': invitation
+    })
