@@ -8,6 +8,7 @@ from csa.models import CSA
 from platform_connections.models import ChatSession
 from settings.models import UserPreference
 from task.models import Task
+from tickets.models import Ticket
 
 
 def get_priority_weight(priority):
@@ -118,6 +119,23 @@ def dashboard(request):
         'resolved_tickets': active_sessions.filter(is_active=False).count()  # Using completed sessions as proxy
     }
     
+    # Get tickets accessible to the user
+    user_tickets = Ticket.objects.filter(
+        teams__members__user=request.user,
+        teams__members__is_active=True
+    ).distinct()
+    
+    # Tickets Context
+    tickets_context = {
+        'total_tickets': user_tickets.count(),
+        'urgent_tickets': user_tickets.filter(priority=Ticket.Priority.URGENT).count(),
+        'recent_tickets': user_tickets.order_by('-created_at')[:4],
+        'urgent_ticket_list': user_tickets.filter(
+            priority=Ticket.Priority.URGENT,
+            status__in=[Ticket.Status.OPEN, Ticket.Status.IN_PROGRESS]
+        ).order_by('-created_at')[:3]
+    }
+    
     # Settings Context
     settings_context = {
         'user_preferences': user_preferences,
@@ -129,6 +147,7 @@ def dashboard(request):
         **agents_context,
         **settings_context,
         **tasks_context,
+        **tickets_context,
         'user': request.user,
     }
     
