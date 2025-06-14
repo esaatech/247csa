@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
+from team.models import Team
+from team.TeamObjectBase import TeamObjectBase
 
 def generate_customer_number():
     """Generate a customer number in the format CST-YYYYMMDD-XXXXX"""
@@ -25,7 +27,7 @@ def generate_customer_number():
     
     return f'CST-{date_part}-{sequence:05d}'
 
-class Customer(models.Model):
+class Customer(TeamObjectBase):
     task_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     activity_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # For interactions/activities
     customer_number = models.CharField(max_length=25, unique=True, editable=False, null=True)  # Format: CST-YYYYMMDD-XXXXX

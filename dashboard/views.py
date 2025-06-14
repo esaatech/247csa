@@ -27,19 +27,19 @@ def dashboard(request):
     # Get or create user preferences
     user_preferences, created = UserPreference.objects.get_or_create(user=request.user)
     
-    # Get all customers for the current user
-    user_customers = Customer.objects.filter(created_by=request.user)
+    # Get all customers for the current user's teams (team-based access)
+    user_teams_customers = Customer.objects.filter(teams__members__user=request.user, teams__members__is_active=True).distinct()
     
     # Create a mapping of task_uuid to customer_id
     task_uuid_to_customer = {
         str(customer.task_uuid): customer.id 
-        for customer in user_customers
+        for customer in user_teams_customers
     }
     
-    # Get all task_uuids for the user's customers
-    customer_task_uuids = user_customers.values_list('task_uuid', flat=True)
+    # Get all task_uuids for the user's team customers
+    customer_task_uuids = user_teams_customers.values_list('task_uuid', flat=True)
     
-    # Get tasks for the user's customers
+    # Get tasks for the user's team customers
     all_tasks = Task.objects.filter(task_uuid__in=customer_task_uuids)
     
     # Create task dictionaries with customer IDs
@@ -82,12 +82,12 @@ def dashboard(request):
         'future_tasks': future_tasks,
     }
     
-    # CRM Context
+    # CRM Context (team-based)
     crm_context = {
-        'total_customers': user_customers.count(),
-        'new_customers': user_customers.filter(created_at__gte=last_week).count(),
-        'recent_customers': user_customers.order_by('-created_at')[:5],
-        'followup_tasks': user_customers.filter(
+        'total_customers': user_teams_customers.count(),
+        'new_customers': user_teams_customers.filter(created_at__gte=last_week).count(),
+        'recent_customers': user_teams_customers.order_by('-created_at')[:5],
+        'followup_tasks': user_teams_customers.filter(
             tasks__due_date__lt=now,
             tasks__is_completed=False
         ).distinct()[:3]

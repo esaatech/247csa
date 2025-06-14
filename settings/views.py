@@ -19,9 +19,30 @@ def settings_dashboard(request):
 
 @login_required
 def profile_settings(request):
+    user = request.user
+    member_teams = Team.objects.filter(members__user=user)
+    owned_teams = Team.objects.filter(owner=user)
+    teams = list(member_teams) + list(owned_teams)
+    # Remove duplicates by team id
+    unique_teams = {team.id: team for team in teams}.values()
+    team_roles = []
+    for team in unique_teams:
+        if hasattr(team, 'owner') and team.owner == user:
+            role = 'Owner'
+        else:
+            tm = TeamMember.objects.filter(team=team, user=user).first()
+            if tm and hasattr(tm, 'get_role_display'):
+                role = tm.get_role_display()
+            elif tm:
+                role = tm.role
+            else:
+                role = 'Member'
+        team_roles.append({'name': team.name, 'role': role})
     context = {
         'active_section': 'profile',
-        'page_title': 'Profile Settings'
+        'page_title': 'Profile Settings',
+        'user': user,
+        'teams': team_roles,
     }
     return render(request, 'settings/profile.html', context)
 

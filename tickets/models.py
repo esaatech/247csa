@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from team.models import Team, TeamMember
+from team.TeamObjectBase import TeamObjectBase
 import uuid
 
 User = get_user_model()
@@ -19,7 +20,7 @@ class TicketCategory(models.Model):
     def __str__(self):
         return self.name
 
-class Ticket(models.Model):
+class Ticket(TeamObjectBase):
     """Main ticket model for tracking support requests"""
     
     class Status(models.TextChoices):
@@ -61,10 +62,6 @@ class Ticket(models.Model):
         null=True,
         blank=True
     )
-    teams = models.ManyToManyField(
-        Team,
-        related_name='tickets'
-    )
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -89,23 +86,6 @@ class Ticket(models.Model):
     def __str__(self):
         return f"{self.title} - {self.status}"
 
-    def can_view(self, user):
-        """Check if a user can view this ticket"""
-        return self.teams.filter(members__user=user, members__is_active=True).exists()
-    
-    def can_edit(self, user):
-        """Check if a user can edit this ticket"""
-        # Creator can always edit
-        if self.created_by == user:
-            return True
-            
-        # Check if user is admin/owner in any of the ticket's teams
-        return self.teams.filter(
-            members__user=user,
-            members__is_active=True,
-            members__role__in=[TeamMember.Roles.ADMIN, TeamMember.Roles.OWNER]
-        ).exists()
-    
     def can_comment(self, user):
         """Check if a user can comment on this ticket"""
         # Any team member can comment
@@ -118,25 +98,6 @@ class Ticket(models.Model):
             user == self.assigned_to or 
             self.can_edit(user)
         )
-    
-    def share_with_team(self, team):
-        """Share this ticket with another team"""
-        if not self.teams.filter(id=team.id).exists():
-            self.teams.add(team)
-    
-    def unshare_with_team(self, team):
-        """Remove team's access to this ticket"""
-        if self.teams.count() > 1:  # Prevent removing last team
-            self.teams.remove(team)
-    
-    def get_visible_teams(self, user):
-        """Get teams that the user can share this ticket with"""
-        user_admin_teams = Team.objects.filter(
-            members__user=user,
-            members__is_active=True,
-            members__role__in=[TeamMember.Roles.ADMIN, TeamMember.Roles.OWNER]
-        )
-        return user_admin_teams.exclude(id__in=self.teams.all())
 
 class TicketComment(models.Model):
     """Comments and updates on tickets"""

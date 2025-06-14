@@ -3,6 +3,7 @@
     <div class="flex justify-between items-center">
         <h2 class="text-xl font-semibold text-gray-900">Customer Details</h2>
         <div class="space-x-2">
+            {% if can_edit %}
             <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     onclick="showEditCustomerPanel({{ customer.id }})"
                     type="button">
@@ -23,6 +24,7 @@
                     Delete
                 </span>
             </button>
+            {% endif %}
         </div>
     </div>
 </div>
