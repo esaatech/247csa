@@ -1,5 +1,45 @@
 console.log("CSA Create script loaded!");
 
+
+class CSAListManager {
+    constructor(listSelector = '#csaList', itemSelector = '.csa-item', mainContentSelector = '#mainContent') {
+        this.list = document.querySelector(listSelector);
+        this.itemSelector = itemSelector;
+        this.mainContent = document.querySelector(mainContentSelector);
+    }
+
+    removeAndSelect(deletedCsaId) {
+        console.log("Removing and selecting CSA:", deletedCsaId);
+        const items = Array.from(this.list.querySelectorAll(this.itemSelector));
+        const idx = items.findIndex(item => item.dataset.csaId === deletedCsaId);
+
+        if (idx === -1) return; // Item not found
+
+        // Remove the item from the DOM
+        const deletedItem = items[idx];
+        deletedItem.parentNode.removeChild(deletedItem);
+
+        // Recompute the list after removal
+        const newItems = Array.from(this.list.querySelectorAll(this.itemSelector));
+        if (newItems.length === 0) {
+            // No CSAs left, load the welcome message template via HTMX
+            if (this.mainContent) {
+                console.log("Loading welcome message template via HTMX");
+                htmx.ajax('GET', '/api/csa/welcome-message/', this.mainContent);
+            }
+            return;
+        }
+
+        // Select next, else previous, else first
+        let nextItem = newItems[idx] || newItems[idx - 1] || newItems[0];
+        if (nextItem) {
+            nextItem.click();
+        }
+    }
+}
+
+
+
 let currentStep = 1;
 
 
@@ -282,7 +322,6 @@ async function saveStep3() {
     }
     
     const data = {
-        faqs: collectFaqs(),
         integrations: {
             platforms: getPlatformConnections(),
             crm: getCrmConnection()
@@ -399,7 +438,14 @@ window.initCsaForm = function() {
                     
                     if (response.ok) {
                         // Redirect to dashboard or CSA list after successful deletion
-                        window.location.href = '/dashboard/';
+                        //window.location.href = '/dashboard/';
+                        const csaListManager = new CSAListManager();
+                        csaListManager.removeAndSelect(csaId);
+                        //showToast('CSA deleted successfully');
+
+
+
+
                     } else {
                         const data = await response.json();
                         alert(data.detail || 'Failed to delete CSA');
@@ -429,124 +475,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Modular function to create a FAQ entry
-function createFaqEntry(faqData = null) {
-    const faqEntry = document.createElement('div');
-    faqEntry.className = 'border rounded-lg p-4 space-y-4';
 
-    // Default values
-    const question = faqData?.question || '';
-    const responseType = faqData?.response_type || 'answer';
-    const answer = faqData?.answer || '';
-    const subQuestions = Array.isArray(faqData?.sub_questions) ? faqData.sub_questions : [];
-
-    faqEntry.innerHTML = `
-        <div class="flex items-center justify-between">
-            <h4 class="font-medium">FAQ Entry</h4>
-            <button 
-                class="p-2 text-red-600 hover:bg-red-50 rounded"
-                onclick="this.closest('.border').remove()"
-            >
-                <i data-lucide="trash-2" class="h-4 w-4"></i>
-            </button>
-        </div>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Main Question</label>
-                <input 
-                    type="text" 
-                    class="w-full p-2 border rounded-md"
-                    placeholder="Enter the main question"
-                    value="${question.replace(/"/g, '&quot;')}"
-                >
-            </div>
-            <div class="space-y-2">
-                <label class="block text-sm font-medium">Response Type</label>
-                <div class="flex gap-4">
-                    <label class="flex items-center gap-2">
-                        <input type="radio" name="responseType${Math.random()}" value="answer" ${responseType === 'answer' ? 'checked' : ''}>
-                        <span>Direct Answer</span>
-                    </label>
-                    <label class="flex items-center gap-2">
-                        <input type="radio" name="responseType${Math.random()}" value="subquestions" ${responseType === 'subquestions' ? 'checked' : ''}>
-                        <span>Sub-questions</span>
-                    </label>
-                </div>
-            </div>
-            <div class="answerSection" ${responseType === 'answer' ? '' : 'hidden'}>
-                <label class="block text-sm font-medium mb-1">Answer</label>
-                <textarea 
-                    class="w-full p-2 border rounded-md"
-                    placeholder="Enter the answer"
-                    rows="3"
-                >${answer}</textarea>
-            </div>
-            <div class="subquestionsSection ${responseType === 'subquestions' ? '' : 'hidden'} space-y-4">
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium">Sub-questions</label>
-                    <div class="subquestionsList space-y-2">
-                        ${subQuestions.map(subQ => `
-                            <div class="border rounded p-3 space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <h5 class="font-medium">Sub-question</h5>
-                                    <button 
-                                        class="p-1 text-red-600 hover:bg-red-50 rounded"
-                                        onclick="this.closest('.border').remove()"
-                                    >
-                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                                    </button>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">Question</label>
-                                    <input 
-                                        type="text" 
-                                        class="w-full p-2 border rounded-md"
-                                        placeholder="Enter sub-question"
-                                        value="${subQ.question.replace(/"/g, '&quot;')}"
-                                    >
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">Answer</label>
-                                    <textarea 
-                                        class="w-full p-2 border rounded-md"
-                                        placeholder="Enter answer for this sub-question"
-                                        rows="2"
-                                    >${subQ.answer}</textarea>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button
-                        class="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50"
-                        onclick="addSubQuestion(this)"
-                    >
-                        <i data-lucide="plus" class="h-4 w-4"></i>
-                        Add Sub-question
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Add event listeners for response type toggle
-    const responseTypeInputs = faqEntry.querySelectorAll('input[type="radio"][name^="responseType"]');
-    responseTypeInputs.forEach(input => {
-        input.addEventListener('change', (e) => {
-            const answerSection = faqEntry.querySelector('.answerSection');
-            const subquestionsSection = faqEntry.querySelector('.subquestionsSection');
-            if (!answerSection || !subquestionsSection) return;
-            if (e.target.value === 'answer') {
-                answerSection.classList.remove('hidden');
-                subquestionsSection.classList.add('hidden');
-            } else {
-                answerSection.classList.add('hidden');
-                subquestionsSection.classList.remove('hidden');
-            }
-        });
-    });
-    lucide.createIcons();
-    return faqEntry;
-}
 
 // Add this function to handle the final create button
 async function finalizeCsa() {
@@ -556,7 +485,6 @@ async function finalizeCsa() {
     }
     
     const data = {
-        faqs: collectFaqs(),
         integrations: {
             platforms: getPlatformConnections(),
             crm: getCrmConnection()
@@ -579,51 +507,15 @@ async function finalizeCsa() {
             throw new Error(errorData.error || 'Failed to finalize CSA');
         }
         
-        // Redirect to dashboard on success
-        window.location.href = '/dashboard/';
+        // Reload the page to show the new CSA
+        window.location.reload();
+        
         return true;
     } catch (error) {
         console.error("Error finalizing CSA:", error);
         alert(error.message);
         return false;
     }
-}
-
-// Add this function to collect FAQs from the form
-function collectFaqs() {
-    const faqs = [];
-    const faqEntries = document.querySelectorAll('#faqList > div');
-    
-    faqEntries.forEach(entry => {
-        const question = entry.querySelector('input[type="text"]').value;
-        const responseType = entry.querySelector('input[type="radio"]:checked').value;
-        const answer = entry.querySelector('.answerSection textarea')?.value || '';
-        
-        const subQuestions = [];
-        if (responseType === 'subquestions') {
-            entry.querySelectorAll('.subquestionsList > div').forEach(subQ => {
-                const subQuestion = subQ.querySelector('input[type="text"]').value;
-                const subAnswer = subQ.querySelector('textarea').value;
-                if (subQuestion && subAnswer) {
-                    subQuestions.push({
-                        question: subQuestion,
-                        answer: subAnswer
-                    });
-                }
-            });
-        }
-
-        if (question) {
-            faqs.push({
-                question,
-                response_type: responseType,
-                answer: answer,
-                sub_questions: subQuestions
-            });
-        }
-    });
-
-    return faqs;
 }
 
 // Add this function to collect platform connections

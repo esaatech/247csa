@@ -337,3 +337,6 @@ def firebase_get_faqs(firebase_path):
         faqs.append(value)
     return faqs
 
+def welcome_message(request):
+    return render(request, 'csa/welcome_message.html')
+
