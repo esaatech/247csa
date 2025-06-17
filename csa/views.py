@@ -3,8 +3,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from django.db import transaction
-import firebase_admin
-from firebase_admin import credentials, db
 from django.conf import settings
 import os
 from .models import CSA, FAQ, SubQuestion
@@ -68,10 +66,6 @@ class CSAViewSet(viewsets.ModelViewSet):
         data['user'] = request.user.id
         
         try:
-            # Extract FAQs from request data
-            faqs_data = data.pop('faqs', [])
-            print("FAQS DATA: ", faqs_data)
-            
             # Create CSA in Django
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
@@ -81,13 +75,8 @@ class CSAViewSet(viewsets.ModelViewSet):
             from team.models import Team
             user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
             csa.teams.add(*user_teams)
-            
-            # Generate Firebase path
-            firebase_path = firebase_generate_path(request.user, csa.id)
-            csa.firebase_path = firebase_path
             csa.save()
             
-            firebase_save_faqs(request.user, csa.id, faqs_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -123,9 +112,6 @@ class CSAViewSet(viewsets.ModelViewSet):
             from team.models import Team
             user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
             csa.teams.add(*user_teams)
-            # Generate Firebase path
-            firebase_path = firebase_generate_path(request.user, csa.id)
-            csa.firebase_path = firebase_path
             csa.save()
             
             return Response({
@@ -147,19 +133,6 @@ class CSAViewSet(viewsets.ModelViewSet):
         csa = self.get_object()
         
         try:
-            # Initialize Firebase first
-            firebase_init()
-            
-            # Handle file uploads, URLs, and text
-            knowledge_data = request.data
-            
-            # Save to Firebase or your preferred storage
-            firebase_path = csa.firebase_path
-            ref = db.reference(firebase_path)
-            ref.update({
-                'knowledge_base': knowledge_data
-            })
-            
             # Update status to in_progress
             csa.status = 'in_progress'
             csa.save()
@@ -179,20 +152,6 @@ class CSAViewSet(viewsets.ModelViewSet):
         csa = self.get_object()
         
         try:
-            # Extract FAQs from request data
-            faqs_data = request.data.get('faqs', [])
-            
-            # Save FAQs to Firebase
-            firebase_save_faqs(request.user, csa.id, faqs_data)
-            
-            # Handle platform connections and CRM data
-            integrations_data = request.data.get('integrations', {})
-            firebase_path = csa.firebase_path
-            ref = db.reference(firebase_path)
-            ref.update({
-                'integrations': integrations_data
-            })
-            
             # Update status to ready when all steps are complete
             csa.status = 'ready'
             csa.save()
@@ -219,9 +178,6 @@ class CSAViewSet(viewsets.ModelViewSet):
             from faq_management.models import FAQ
             FAQ.objects.filter(faqid=str(csa.id)).delete()
             
-            # Delete Firebase data
-            firebase_delete_agent(request.user, csa.id)
-            
             # Delete the CSA
             self.perform_destroy(csa)
             
@@ -243,7 +199,6 @@ def csa_list(request):
 def csa_create(request):
     print("csa_create called")
     if request.method == 'POST':
-
         # Handle POST request using the existing CSAViewSet
         viewset = CSAViewSet()
         viewset.request = request
@@ -264,10 +219,7 @@ def csa_edit(request, pk):
     import json
     user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
     csa = get_object_or_404(CSA, id=pk, teams__in=user_teams)
-    # Fetch FAQs from Firebase if needed
-    faqs = firebase_get_faqs(csa.firebase_path) if csa.firebase_path else []
-    faqs_json = json.dumps(faqs)
-    return render(request, 'csa/create.html', {'csa': csa, 'is_edit': True, 'faqs': faqs_json})
+    return render(request, 'csa/create.html', {'csa': csa, 'is_edit': True})
 
 def crm_connect(request):
     # You can add logic here to show available CRMs, connection status, etc.
@@ -276,66 +228,9 @@ def crm_connect(request):
 @require_GET
 def csa_faqs_api(request, pk):
     csa = get_object_or_404(CSA, pk=pk, user=request.user)
-    faqs = firebase_get_faqs(csa.firebase_path)
-    return JsonResponse({'faqs': faqs})
-
-def firebase_generate_path(user, csa_id):
-    """Return the Firebase path for a user's CSA agent."""
-    return f"users/{user.username}/agents/{csa_id}"
-
-def firebase_init():
-    """Initialize Firebase if not already initialized."""
-    import firebase_admin
-    from firebase_admin import credentials
-    from django.conf import settings
-    import os
-
-    if not firebase_admin._apps:
-        cred_path = os.path.join(settings.BASE_DIR, 'csa-1a82c-firebase-adminsdk-fbsvc-5f3d988418.json')
-        if not os.path.exists(cred_path):
-            raise FileNotFoundError(f"Firebase credentials file not found at: {cred_path}")
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://csa-1a82c-default-rtdb.firebaseio.com/'
-        })
-
-def firebase_save_faqs(user, csa_id, faqs_data):
-    """Save FAQs to Firebase under the agent's path."""
-    from firebase_admin import db
-    firebase_init()
-    firebase_path = firebase_generate_path(user, csa_id)
-    ref = db.reference(firebase_path)
-    # Always create the agent node
-    ref.set({'faqs': {}})
-    faqs_ref = ref.child('faqs')
-    for faq_data in faqs_data:
-        faq_ref = faqs_ref.push()
-        faq_ref.set({
-            'question': faq_data['question'],
-            'response_type': faq_data['response_type'],
-            'answer': faq_data.get('answer', ''),
-            'sub_questions': faq_data.get('sub_questions', [])
-        })
-
-def firebase_delete_agent(user, csa_id):
-    """Delete the agent's record from Firebase."""
-    from firebase_admin import db
-    firebase_init()
-    firebase_path = firebase_generate_path(user, csa_id)
-    ref = db.reference(firebase_path)
-    ref.delete()
-
-def firebase_get_faqs(firebase_path):
-    """Fetch FAQs from Firebase for a given agent path."""
-    from firebase_admin import db
-    firebase_init()
-    ref = db.reference(firebase_path + '/faqs')
-    faqs_dict = ref.get() or {}
-    faqs = []
-    for key, value in faqs_dict.items():
-        value['id'] = key
-        faqs.append(value)
-    return faqs
+    faqs = FAQ.objects.filter(csa=csa)
+    serializer = FAQSerializer(faqs, many=True)
+    return JsonResponse({'faqs': serializer.data})
 
 def welcome_message(request):
     return render(request, 'csa/welcome_message.html')
