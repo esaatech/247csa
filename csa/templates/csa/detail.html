@@ -44,6 +44,7 @@
                     <span class="ml-2 text-sm">Human Takeover</span>
                 </label>
                 <!-- Settings Icon -->
+                {% if can_edit %}
                 <button
                     id="settingsBtn"
                     hx-get="{% url 'csa:edit' csa.id %}"
@@ -54,6 +55,7 @@
                 >
                     <i data-lucide="settings" class="h-5 w-5"></i>
                 </button>
+                {% endif %}
             </div>
         </div>
 

@@ -16,11 +16,32 @@ from django.http import HttpResponseServerError, JsonResponse
 import json
 from django.views.decorators.http import require_GET
 import logging
+from team.models import Team
 
 logger = logging.getLogger(__name__)
 
 def dashboard(request):
-    return render(request, 'csa/csa-dashboard.html')
+    user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+    csas = CSA.objects.filter(teams__in=user_teams).distinct().order_by('-created_at')
+    csa_id = request.GET.get('csa_id')
+    selected_csa = None
+    if csa_id:
+        try:
+            selected_csa = csas.get(id=csa_id)
+        except CSA.DoesNotExist:
+            selected_csa = csas.first() if csas else None
+    else:
+        selected_csa = csas.first() if csas else None
+    open_csa_id = str(selected_csa.id) if selected_csa else ''
+    can_edit = selected_csa.can_edit(request.user) if selected_csa else False
+    context = {
+        'csas': csas,
+        'selected_csa': selected_csa,
+        'open_csa_id': open_csa_id,
+        'csa_id': open_csa_id,
+        'can_edit': can_edit,
+    }
+    return render(request, 'csa/csa-dashboard.html', context)
 
 class CSAViewSet(viewsets.ModelViewSet):
     print("CSAViewSet called")
@@ -29,8 +50,9 @@ class CSAViewSet(viewsets.ModelViewSet):
     authentication_classes = [SessionAuthentication]
     
     def get_queryset(self):
-        print("get_queryset called")
-        return CSA.objects.filter(user=self.request.user)
+        from team.models import Team
+        user_teams = Team.objects.filter(members__user=self.request.user, members__is_active=True)
+        return CSA.objects.filter(teams__in=user_teams).distinct()
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -55,9 +77,12 @@ class CSAViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             csa = serializer.save(user=request.user)
             
-            # Generate Firebase path
+            # Associate CSA with all of the user's active teams
+            from team.models import Team
+            user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+            csa.teams.add(*user_teams)
             
-
+            # Generate Firebase path
             firebase_path = firebase_generate_path(request.user, csa.id)
             csa.firebase_path = firebase_path
             csa.save()
@@ -94,7 +119,10 @@ class CSAViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 status='draft'  # Set initial status to draft
             )
-            
+            # Associate CSA with all of the user's active teams
+            from team.models import Team
+            user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+            csa.teams.add(*user_teams)
             # Generate Firebase path
             firebase_path = firebase_generate_path(request.user, csa.id)
             csa.firebase_path = firebase_path
@@ -207,12 +235,10 @@ class CSAViewSet(viewsets.ModelViewSet):
             )
 
 def csa_list(request):
-    try:
-        csas = CSA.objects.filter(user=request.user).order_by('-created_at')
-        return render(request, 'csa/csa_list.html', {'csas': csas})
-    except Exception as e:
-        print(f"Error in csa_list: {str(e)}")
-        return HttpResponseServerError(f"Failed to load CSA list: {str(e)}")
+    from team.models import Team
+    user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+    csas = CSA.objects.filter(teams__in=user_teams).distinct().order_by('-created_at')
+    return render(request, 'csa/csa_list.html', {'csas': csas})
 
 def csa_create(request):
     print("csa_create called")
@@ -227,71 +253,31 @@ def csa_create(request):
         return render(request, 'csa/create.html')
 
 def csa_detail(request, pk):
-    try:
-        csa = get_object_or_404(CSA, pk=pk, user=request.user)
-        return render(request, 'csa/detail.html', {'csa': csa})
-    except Exception as e:
-        print(f"Error in csa_detail: {str(e)}")
-        return HttpResponseServerError(f"Failed to load CSA details: {str(e)}")
+    from team.models import Team
+    user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+    csa = get_object_or_404(CSA, id=pk, teams__in=user_teams)
+    can_edit = csa.can_edit(request.user)
+    return render(request, 'csa/detail.html', {'csa': csa, 'can_edit': can_edit})
 
 def csa_edit(request, pk):
-    print("csa_edit called")
-    csa = get_object_or_404(CSA, pk=pk, user=request.user)
-    errors = None
-
-    if request.method == 'POST':
-        faqs_data = []
-        if request.content_type == 'application/json':
-            body = json.loads(request.body)
-            csa.name = body.get('name', csa.name)
-            csa.description = body.get('description', csa.description)
-            # Add other fields as needed
-            faqs_data = body.get('faqs', [])
-        else:
-            csa.name = request.POST.get('name', csa.name)
-            csa.description = request.POST.get('description', csa.description)
-            # Add other fields as needed
-            # faqs_data = ... (parse from form if needed)
-
-       
-
-        try:
-            csa.save()
-            print("CSA saved")
-            # Delete old Firebase record and save new FAQs
-            firebase_delete_agent(request.user, csa.id)
-            firebase_save_faqs(request.user, csa.id, faqs_data)
-
-            # Return JSON if AJAX/JS, else render detail
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-                return JsonResponse({'success': True, 'id': str(csa.id)})
-            return render(request, 'csa/detail.html', {'csa': csa})
-
-        except Exception as e:
-            errors = {'non_field_errors': [str(e)]}
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-                return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
-    # On GET or error, render the edit form (reuse create.html)
-    # Fetch FAQs from Firebase
-    faqs = firebase_get_faqs(csa.firebase_path)
-    faqs = json.dumps(faqs)  # This is a valid JSON string
-    print("FAQS: ", faqs)
-    return render(request, 'csa/create.html', {'csa': csa, 'is_edit': True, 'errors': errors, 'faqs': faqs})
-
+    from team.models import Team
+    import json
+    user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+    csa = get_object_or_404(CSA, id=pk, teams__in=user_teams)
+    # Fetch FAQs from Firebase if needed
+    faqs = firebase_get_faqs(csa.firebase_path) if csa.firebase_path else []
+    faqs_json = json.dumps(faqs)
+    return render(request, 'csa/create.html', {'csa': csa, 'is_edit': True, 'faqs': faqs_json})
 
 def crm_connect(request):
     # You can add logic here to show available CRMs, connection status, etc.
     return render(request, 'csa/crm_connect.html')  
-
-
 
 @require_GET
 def csa_faqs_api(request, pk):
     csa = get_object_or_404(CSA, pk=pk, user=request.user)
     faqs = firebase_get_faqs(csa.firebase_path)
     return JsonResponse({'faqs': faqs})
-
 
 def firebase_generate_path(user, csa_id):
     """Return the Firebase path for a user's CSA agent."""

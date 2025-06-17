@@ -9,6 +9,7 @@ from platform_connections.models import ChatSession
 from settings.models import UserPreference
 from task.models import Task
 from tickets.models import Ticket
+from team.models import Team
 
 
 def get_priority_weight(priority):
@@ -93,30 +94,29 @@ def dashboard(request):
         ).distinct()[:3]
     }
     
-    # Get user's CSAs
-    user_csas = CSA.objects.filter(user=request.user)
-    
-    # Get active chat sessions for user's CSAs
+    # Get user's teams and all CSAs for those teams
+    user_teams = Team.objects.filter(members__user=request.user, members__is_active=True)
+    team_csas = CSA.objects.filter(teams__in=user_teams).distinct()
+    # Get active chat sessions for team CSAs
     active_sessions = ChatSession.objects.filter(
-        agent_id__in=user_csas.values_list('id', flat=True),
+        agent_id__in=team_csas.values_list('id', flat=True),
         is_active=True
     )
-    
     # Count CSAs by handling mode
-    ai_agents = user_csas.filter(default_handling_mode='ai').count()
-    human_agents = user_csas.filter(default_handling_mode='human').count()
-    
-    # Agents Context
+    ai_agents = team_csas.filter(default_handling_mode='ai').count()
+    human_agents = team_csas.filter(default_handling_mode='human').count()
+    # Agents Context (team-based)
     agents_context = {
-        'total_agents': user_csas.count(),
-        'active_agents': user_csas.filter(status='ready').count(),
-        'online_agents': user_csas.filter(status='ready').order_by('-updated_at')[:5].select_related('user'),
+        'total_agents': team_csas.count(),
+        'active_agents': team_csas.filter(status='ready').count(),
+        'online_agents': team_csas.filter(status='ready').order_by('-updated_at')[:5].select_related('user'),
         'ai_agents': ai_agents,
         'human_agents': human_agents,
         'active_chats': active_sessions.count(),
-        'avg_response_time': 5,  # Placeholder - will implement when we add response tracking
-        'satisfaction_rate': 95,  # Placeholder - will implement when we add feedback system
-        'resolved_tickets': active_sessions.filter(is_active=False).count()  # Using completed sessions as proxy
+        'avg_response_time': 5,  # Placeholder
+        'satisfaction_rate': 95,  # Placeholder
+        'resolved_tickets': active_sessions.filter(is_active=False).count(),
+        'team_csas': team_csas,  # For clickable links in dashboardcard
     }
     
     # Get tickets accessible to the user

@@ -12,10 +12,22 @@ function storeAgentId(id) {
 // clear this so that when we are creating a new csa we don't have an agent_id sent to the view, this will affect how the plaforms buttons are shown, it will be managed with the csa id that it holds. 
 function clearAgentId() {
     window.agent_id = null;
-    console.log("Agent ID cleared");
+    window.csaId = null;  // Also clear the CSA ID
+    console.log("Agent ID and CSA ID cleared");
 }
 
-
+// Add new function to reset form state
+function resetFormState() {
+    window.csaId = null;
+    window.agent_id = null;
+    // Reset any form fields if needed
+    const form = document.querySelector('#createCsaForm form');  // Target the actual form element
+    if (form) {
+        form.reset();
+    }
+    // Reset step indicators
+    showStep(1);
+}
 
 // Add this function at the top of your file
 function getCookie(name) {
@@ -163,18 +175,8 @@ async function saveStep1() {
                 credentials: 'include',
                 body: JSON.stringify(data)
             });
-        } else if (window.csaId) {
-            // If we have a window.csaId, update that CSA
-            console.log('Updating existing CSA:', window.csaId);
-            response = await fetch(`/api/csa/csa/${window.csaId}/`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                credentials: 'include',
-                body: JSON.stringify(data)
-            });
+            // Set window.csaId for edit mode to allow progression
+            window.csaId = csaId;
         } else {
             // Create new CSA using step1 endpoint
             console.log('Creating new CSA');
@@ -187,6 +189,11 @@ async function saveStep1() {
                 credentials: 'include',
                 body: JSON.stringify(data)
             });
+            
+            if (response.ok) {
+                const result = await response.json();
+                window.csaId = result.id;  // Only set window.csaId for new CSAs
+            }
         }
         
         if (!response.ok) {
@@ -194,8 +201,6 @@ async function saveStep1() {
             throw new Error(errorData.error || 'Failed to save basic info');
         }
         
-        const result = await response.json();
-        window.csaId = result.id;
         return true;
     } catch (error) {
         console.error("Error saving step 1:", error);
@@ -322,6 +327,14 @@ window.initCsaForm = function() {
     // Initialize the wizard
     initWizard();
     
+    // Add click handler for create button
+    const createButton = document.getElementById('createButton');
+    if (createButton) {
+        createButton.addEventListener('click', () => {
+            resetFormState();
+        });
+    }
+
     // Initialize other components only if they exist
             const addUrl = document.getElementById('addUrl');
     if (addUrl) {

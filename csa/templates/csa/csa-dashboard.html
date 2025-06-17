@@ -1,47 +1,21 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<script>
+  {% include 'csa/master.html' %}
+  <script>
   window.openCsaId = "{{ open_csa_id|default:'' }}";
 </script>
-<div class="flex h-screen w-full">
-<input type="hidden" id="csa_id" value="{{ open_csa_id|default:'' }}">
-<input type="hidden" id="chatId" value="7c9e6679-7425-40de-944b-e07fc1f90ae9" />
-
-    <!-- Left Navigation -->
-    <div class="w-1/5 min-w-[300px] bg-white p-4 border-r h-screen flex flex-col">
-        <button 
-            id="createButton"
-            class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 mb-4"
-            hx-get="{% url 'csa:create' %}"
-            hx-target="#mainContent"
-            hx-swap="innerHTML"
-            onclick="clearAgentId()"
-        >
-            Create CSA
-        </button>
-        
-        <!-- CSA List -->
-        <div class="mt-4 flex-1 overflow-y-auto">
-            <h3 class="font-medium mb-2">Your CSAs</h3>
-            <div 
-                id="csaList"
-                hx-get="{% url 'csa:list' %}"
-                hx-trigger="load"
-                hx-swap="innerHTML"
-                class="space-y-2"
-            >
-                <div class="text-gray-500 text-sm p-2">Loading CSAs...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="flex-1 overflow-auto min-w-0" id="mainContent">
-        <!-- Initial welcome content -->
+   <!-- Main Content Area (Detail) -->
+  <div class="flex-1 overflow-auto min-w-0" id="mainContent">
+    {% if selected_csa %}
+      {% include 'csa/detail.html' with csa=selected_csa %}
+    {% else %}
       {% include 'csa/welcome_message.html' %}
-    </div>
+    {% endif %}
+  </div>
 </div>
+
+
 {% endblock %}
 
 {% block js_scripts %}

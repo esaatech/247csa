@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from team.models import Team
+from team.TeamObjectBase import TeamObjectBase
 
-class CSA(models.Model):
+class CSA(TeamObjectBase):
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('in_progress', 'In Progress'),
@@ -27,6 +29,7 @@ class CSA(models.Model):
         ('human', 'Human'),
     ]
     default_handling_mode = models.CharField(max_length=10, choices=HANDLING_CHOICES, default='ai')
+    teams = models.ManyToManyField(Team, related_name='csas')
     
 
     def __str__(self):
